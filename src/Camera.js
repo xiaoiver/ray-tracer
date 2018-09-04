@@ -9,7 +9,11 @@ export default class Camera {
     this.center = $V([0, 0, 0]);
     this.up = $V([0, 1, 0]);
     this.transform = Matrix.I(4);
-    this.projection = this.perspective(fovy, aspect, znear, zfar);
+    this.fovy = fovy;
+    this.aspect = aspect;
+    this.znear = znear;
+    this.zfar = zfar;
+    this.updateProjection();
     this.updateTransform();
   }
 
@@ -196,5 +200,9 @@ export default class Camera {
 
   updateTransform() {
     this.transform = this.projection.x(this.lookAt(this.eye, this.center, this.up));
+  }
+
+  updateProjection() {
+    this.projection = this.perspective(this.fovy, this.aspect, this.znear, this.zfar);
   }
 }

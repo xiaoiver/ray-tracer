@@ -1,7 +1,7 @@
 import Light from './Light';
-import UNIFORM_AMBIENTLIGHT from '../constants';
+import {UNIFORM_AMBIENTLIGHT} from '../constants';
 
-export default class AmbientLight extends Light{
+export default class AmbientLight extends Light {
   constructor(color) {
     super();
     this.color = color;

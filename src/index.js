@@ -1,17 +1,21 @@
 import Stats from 'stats.js';
 import { Matrix, Line } from 'sylvester';
 import  './utils/math';
+import {resizeCanvas} from './utils/dom';
 import Renderer from './Renderer';
 import Controls from './Controls';
 import Scene from './Scene';
 import Camera from './Camera';
-import Sphere from './geometry/Sphere';
+// import Sphere from './geometry/Sphere';
 import Cube from './geometry/Cube';
 import AmbientLight from './light/AmbientLight';
 import CubeShader from './shaders/CubeShader';
 // import RayTracer from './shaders/RayTracer';
 
 const $canvas = document.getElementById('webgl');
+const {displayWidth, displayHeight} = resizeCanvas($canvas);
+const aspect = displayWidth / displayHeight;
+
 // setup stats
 const stats = new Stats();
 const $stats = stats.domElement;
@@ -30,7 +34,7 @@ scene.add(new Cube().translate($V([3, 0, 0])));
 // }));
 scene.addLight(new AmbientLight($V([0.2, 0.2, 0.2])));
 
-const camera = new Camera($V([5.0, 5.0, 5.0]), 55, 1, 0.1, 100);
+const camera = new Camera($V([5.0, 5.0, 5.0]), 55, aspect, 0.1, 100);
 
 const controls = new Controls($canvas);
 controls.on('mouse', () => {
@@ -46,6 +50,11 @@ controls.on('mouse', () => {
     camera.tilt(deltaY * 0.001 * moveSpeed);
     camera.cant(deltaZ * 0.05 * moveSpeed);
   }
+});
+controls.on('resize', ({width, height}) => {
+  camera.aspect = width / height;
+  camera.updateProjection();
+  camera.updateTransform();
 });
 
 const renderer = new Renderer($canvas);

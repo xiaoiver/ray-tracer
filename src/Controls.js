@@ -1,6 +1,6 @@
 import * as dat from 'dat.gui';
 import EventEmitter from 'wolfy87-eventemitter';
-import { canvasMousePos } from './utils/dom';
+import { canvasMousePos, resizeCanvas } from './utils/dom';
 
 export default class Controls extends EventEmitter {
   constructor(canvas) {
@@ -23,20 +23,19 @@ export default class Controls extends EventEmitter {
     this.onMouseup = this.onMouseup.bind(this);
     this.onMouseout = this.onMouseout.bind(this);
     this.onMousewheel = this.onMousewheel.bind(this);
+    this.onResize = this.onResize.bind(this);
+
     canvas.addEventListener('mousedown', this.onMousedown, false);
     canvas.addEventListener('mousemove', this.onMousemove, false);
     canvas.addEventListener('mouseup', this.onMouseup, false);
     canvas.addEventListener('mouseout', this.onMouseout, false);
     canvas.addEventListener('wheel', this.onMousewheel, false);
+    window.addEventListener('resize', this.onResize, false);
 
     const gui = new dat.GUI();
     const cameraFolder = gui.addFolder('camera');
     cameraFolder.add(this.camera, 'isTruck');
     cameraFolder.add(this.camera, 'moveSpeed', 0.1, 2);
-  }
-
-  getZoomScale() {
-    return Math.pow(0.95, this.camera.zoomSpeed);
   }
 
   onMousedown(e) {
@@ -72,5 +71,10 @@ export default class Controls extends EventEmitter {
   onMousewheel(e) {
     this.deltaZ = e.deltaY;
     this.trigger('mouse');
+  }
+
+  onResize() {
+    const {displayWidth, displayHeight} = resizeCanvas(this.canvas);
+    this.trigger('resize', [{width: displayWidth, height: displayHeight}]);
   }
 }
