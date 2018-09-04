@@ -9,6 +9,7 @@ import Camera from './Camera';
 // import Sphere from './geometry/Sphere';
 import Cube from './geometry/Cube';
 import AmbientLight from './light/AmbientLight';
+import PointLight from './light/PointLight';
 import CubeShader from './shaders/CubeShader';
 // import RayTracer from './shaders/RayTracer';
 
@@ -32,7 +33,13 @@ scene.add(new Cube().translate($V([3, 0, 0])));
 //   center: $V([0.0, 0.0, -1.0]),
 //   radius: 0.5
 // }));
-scene.addLight(new AmbientLight($V([0.2, 0.2, 0.2])));
+scene.addLight(new AmbientLight({
+  color: $V([0.2, 0.2, 0.2])
+}));
+scene.addLight(new PointLight({
+  color: $V([1, 1, 1]),
+  position: $V([2.3, 4.0, 3.5])
+}));
 
 const camera = new Camera($V([5.0, 5.0, 5.0]), 55, aspect, 0.1, 100);
 

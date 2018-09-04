@@ -1,23 +1,24 @@
 import Light from './Light';
-import {UNIFORM_AMBIENTLIGHT} from '../constants';
+import {UNIFORM_AMBIENT_LIGHT_COLOR} from '../constants';
 
 export default class AmbientLight extends Light {
-  constructor(color) {
+  constructor({color}) {
     super();
     this.color = color;
+    this.uColor = `${UNIFORM_AMBIENT_LIGHT_COLOR}${this.index}`;
   }
 
-  declare(i) {
-    return `uniform vec3 ${UNIFORM_AMBIENTLIGHT}${i};`;
+  declare() {
+    return `uniform vec3 ${this.uColor};`;
   }
 
-  calculate(i) {
-    return `${UNIFORM_AMBIENTLIGHT}${i} * v_Color.rgb`;
+  calculate() {
+    return `${this.uColor} * v_Color.rgb`;
   }
 
   setUniforms(shader) {
     shader.setUniforms({
-      [UNIFORM_AMBIENTLIGHT]: this.color
+      [this.uColor]: this.color
     });
   }
 }

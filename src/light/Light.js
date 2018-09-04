@@ -1,5 +1,9 @@
+let index = 0;
+
 export default class Light {
-  constructor() {}
+  constructor() {
+    this.index = index++;
+  }
 
   setUniforms(shader) {}
 }

@@ -27,26 +27,22 @@ export default class CubeShader extends Shader {
 
     let lightsDeclarations = [];
     let lightsCalculations = [];
-    scene.lights.forEach((light, i) => {
-      lightsDeclarations.push(light.declare(i));
-      lightsCalculations.push(light.calculate(i));
+    scene.lights.forEach(light => {
+      lightsDeclarations.push(light.declare());
+      lightsCalculations.push(light.calculate());
     });
 
     let fragmentShader = `
       #ifdef GL_ES
       precision mediump float;
       #endif
-      uniform vec3 u_LightColor;
-      uniform vec3 u_LightPosition;
       ${lightsDeclarations.join('')}
       varying vec3 v_Normal;
       varying vec3 v_Position;
       varying vec4 v_Color;
       void main() {
         vec3 normal = normalize(v_Normal);
-        vec3 lightDirection = normalize(u_LightPosition - v_Position);
-        float nDotL = max(dot(lightDirection, normal), 0.0);
-        vec3 diffuse = u_LightColor * v_Color.rgb * nDotL;
+        
         gl_FragColor = vec4(diffuse + ${lightsCalculations.join('+')}, v_Color.a);
       }
     `;
@@ -73,9 +69,7 @@ export default class CubeShader extends Shader {
       this.setUniforms({
         'u_MvpMatrix': mvpMatrix,
         'u_ModelMatrix': modelMatrix,
-        'u_NormalMatrix': normalMatrix,
-        'u_LightColor': $V([1.0, 1.0, 1.0]),
-        'u_LightPosition': $V([2.3, 4.0, 3.5])
+        'u_NormalMatrix': normalMatrix
       });
 
       // Write the vertex property to buffers (coordinates, colors and normals)
