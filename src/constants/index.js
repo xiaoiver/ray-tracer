@@ -1,0 +1,1 @@
+export const UNIFORM_AMBIENTLIGHT = 'u_AmbientLight';

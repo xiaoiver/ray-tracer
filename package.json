@@ -1,0 +1,32 @@
+{
+  "name": "ray-tracer",
+  "version": "1.0.0",
+  "description": "A simple ray-tracer implemented in WebGL",
+  "main": "index.js",
+  "scripts": {
+    "watch": "webpack --watch",
+    "start": "webpack-dev-server --open",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaoiver/ray-tracer.git"
+  },
+  "author": "xiaoiver",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xiaoiver/ray-tracer/issues"
+  },
+  "homepage": "https://github.com/xiaoiver/ray-tracer#readme",
+  "devDependencies": {
+    "webpack": "^4.17.1",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.7"
+  },
+  "dependencies": {
+    "dat.gui": "^0.7.2",
+    "stats.js": "^0.17.0",
+    "sylvester": "^0.0.21",
+    "wolfy87-eventemitter": "^5.2.5"
+  }
+}
