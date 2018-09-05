@@ -56,17 +56,17 @@ scene.addLight(new PointLight({
     quadratic: 0.01
   }
 }));
-// scene.addLight(new PointLight({
-//   color: $V([1, 1, 1]),
-//   position: $V([6, 0, 0]),
-//   attenuation: {
-//     linear: 0.1,
-//     quadratic: 0.01
-//   }
-// }));
+scene.addLight(new PointLight({
+  color: $V([1, 0, 1]),
+  position: $V([6, 0, 0]),
+  attenuation: {
+    linear: 0.1,
+    quadratic: 0.01
+  }
+}));
 scene.addLight(new SpotLight({
   color: $V([1, 1, 1]),
-  position: $V([0, 2, 0]),
+  position: $V([0, 4, 0]),
   direction: $V([0, -1, 0]),
   angle: 24,
   exponent: 40,

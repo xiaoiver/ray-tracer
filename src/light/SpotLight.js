@@ -5,6 +5,7 @@ import {
   UNIFORM_SPOT_LIGHT_DIRECTION
 } from '../constants';
 
+// https://webglfundamentals.org/webgl/lessons/webgl-3d-lighting-spot.html
 export default class SpotLight extends Light {
   constructor(options) {
     super(options);
@@ -29,17 +30,18 @@ export default class SpotLight extends Light {
   }
 
   calculate() {
-    const vLightDirection = `lightDirection${this.index}`;
-    const vSpotEffect = `spotEffect${this.index}`;
-    const vNDotL = `nDotL${this.index}`;
-    const vSpotCosCutoff = `spotCosCutoff${this.index}`;
-    const vSpotCosInnerCutoff = `spotCosInnerCutoff${this.index}`;
+    let i = this.index;
+    const vLightDirection = `lightDirection${i}`;
+    const vSpotEffect = `spotEffect${i}`;
+    const vNDotL = `nDotL${i}`;
+    const vSpotCosCutoff = `spotCosCutoff${i}`;
+    const vSpotCosInnerCutoff = `spotCosInnerCutoff${i}`;
     return `
-      vec3 ${vLightDirection} = vec3(u_fViewMatrix * vec4(${this.uPosition}, 1.0)) - v_Position;
-      vec3 ud = ${this.uDirection};
+      vec3 ${vLightDirection} = ${this.uPosition} - v_Position;
       vec3 n${vLightDirection} = normalize(${vLightDirection});
+      vec3 ncameraDirection${i} = normalize(u_CameraPosition - v_Position);
       float ${vNDotL} = max(dot(normal, n${vLightDirection}), 0.0);
-      float ${vSpotEffect} = dot(normalize(-ud), n${vLightDirection});
+      float ${vSpotEffect} = dot(normalize(${this.uDirection}), -n${vLightDirection});
       float ${vSpotCosCutoff} = cos(${this.angle.toFixed(5)} / 180.0 * PI);
       float ${vSpotCosInnerCutoff} = cos(${(this.angle - this.blur).toFixed(5)} / 180.0 * PI);
       if (${vSpotEffect} > ${vSpotCosCutoff}) {
@@ -47,12 +49,17 @@ export default class SpotLight extends Light {
       } else {
         ${vSpotEffect} = 0.0;
       }
+      float specular${i} = 0.0;
+      if (${vNDotL} > 0.0) {
+        vec3 reflectVec${i} = reflect(-n${vLightDirection}, normal);
+        specular${i} = pow(max(dot(reflectVec${i}, ncameraDirection${i}), 0.0), 120.0);
+      }
       vec3 ${this.vColor} = ${this.uColor} * v_Color.rgb * ${vNDotL}
         * attenuation(${vLightDirection},
           ${this.attenuation.constant.toFixed(5)},
           ${this.attenuation.linear.toFixed(5)},
           ${this.attenuation.quadratic.toFixed(5)})
-        * ${vSpotEffect};
+        * ${vSpotEffect} + specular${i};
     `;
   }
 

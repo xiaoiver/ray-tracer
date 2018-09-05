@@ -21,7 +21,7 @@ export default class PointLight extends Light {
     const vLightDirection = `lightDirection${this.index}`;
     const vNDotL = `nDotL${this.index}`;
     return `
-      vec3 ${vLightDirection} = vec3(u_fViewMatrix * vec4(${this.uPosition}, 1.0)) - v_Position;
+      vec3 ${vLightDirection} = ${this.uPosition} - v_Position;
       vec3 n${vLightDirection} = normalize(${vLightDirection});
       float ${vNDotL} = max(dot(n${vLightDirection}, normal), 0.0);
       vec3 ${this.vColor} = ${this.uColor} * v_Color.rgb * ${vNDotL}

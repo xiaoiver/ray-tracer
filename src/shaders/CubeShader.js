@@ -11,17 +11,17 @@ export default class CubeShader extends Shader {
       attribute vec4 a_Position;
       attribute vec4 a_Color;
       attribute vec4 a_Normal;
-      uniform mat4 u_ProjectionMatrix;
-      uniform mat4 u_ModelViewMatrix;
+      uniform mat4 u_MVPMatrix;
+      uniform mat4 u_ModelMatrix;
       uniform mat4 u_NormalMatrix;
       varying vec4 v_Color;
       varying vec3 v_Normal;
       varying vec3 v_Position;
       void main() {
-        v_Position = vec3(u_ModelViewMatrix * a_Position);
-        v_Normal = normalize(vec3(u_NormalMatrix * a_Normal));
+        v_Position = vec3(u_ModelMatrix * a_Position);
+        v_Normal = vec3(u_NormalMatrix * a_Normal);
         v_Color = a_Color;
-        gl_Position = u_ProjectionMatrix * u_ModelViewMatrix * a_Position;
+        gl_Position = u_MVPMatrix * a_Position;
       }
     `;
 
@@ -41,6 +41,7 @@ export default class CubeShader extends Shader {
       #endif
       #define PI 3.141592653589793
       uniform mat4 u_fViewMatrix;
+      uniform vec3 u_CameraPosition;
       varying vec3 v_Normal;
       varying vec3 v_Position;
       varying vec4 v_Color;
@@ -72,16 +73,17 @@ export default class CubeShader extends Shader {
       light.setUniforms(this);
     });
 
+    let vpMatrix = camera.transform;
     scene.objects.forEach(object => {
       let {vertices, colors, normals, modelMatrix} = object;
-      let mvMatrix = camera.view.x(modelMatrix);
-      let normalMatrix = mvMatrix.inverse().transpose();
+      let mvpMatrix = vpMatrix.x(modelMatrix);
+      let normalMatrix = modelMatrix.inverse().transpose();
 
       this.setUniforms({
-        'u_ProjectionMatrix': camera.projection,
-        'u_fViewMatrix': camera.view,
-        'u_ModelViewMatrix': mvMatrix,
-        'u_NormalMatrix': normalMatrix
+        'u_MVPMatrix': mvpMatrix,
+        'u_ModelMatrix': modelMatrix,
+        'u_NormalMatrix': normalMatrix,
+        'u_CameraPosition': camera.eye
       });
 
       // Write the vertex property to buffers (coordinates, colors and normals)
