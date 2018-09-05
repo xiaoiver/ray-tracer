@@ -199,7 +199,8 @@ export default class Camera {
   }
 
   updateTransform() {
-    this.transform = this.projection.x(this.lookAt(this.eye, this.center, this.up));
+    this.view = this.lookAt(this.eye, this.center, this.up);
+    this.transform = this.projection.x(this.view);
   }
 
   updateProjection() {

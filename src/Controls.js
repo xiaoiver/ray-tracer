@@ -3,9 +3,12 @@ import EventEmitter from 'wolfy87-eventemitter';
 import { canvasMousePos, resizeCanvas } from './utils/dom';
 
 export default class Controls extends EventEmitter {
-  constructor(canvas) {
+  constructor({canvas, camera, scene}) {
     super();
     this.canvas = canvas;
+    this.camera = camera;
+    this.scene = scene;
+
     this.isMoving = false;
     this.lastX = -1;
     this.lastY = -1;
@@ -13,9 +16,13 @@ export default class Controls extends EventEmitter {
     this.deltaY = 0;
     this.deltaZ = 0;
 
-    this.camera = {
+    this.cameraController = {
       isTruck: true,
       moveSpeed: 0.6
+    };
+
+    this.lightController = {
+
     };
 
     this.onMousedown = this.onMousedown.bind(this);
@@ -34,8 +41,11 @@ export default class Controls extends EventEmitter {
 
     const gui = new dat.GUI();
     const cameraFolder = gui.addFolder('camera');
-    cameraFolder.add(this.camera, 'isTruck');
-    cameraFolder.add(this.camera, 'moveSpeed', 0.1, 2);
+    cameraFolder.add(this.cameraController, 'isTruck');
+    cameraFolder.add(this.cameraController, 'moveSpeed', 0.1, 2);
+
+    const lightFolder = gui.addFolder('light');
+    gui.open();
   }
 
   onMousedown(e) {
@@ -56,7 +66,7 @@ export default class Controls extends EventEmitter {
       this.lastX = x;
       this.lastY = y;
 
-      this.trigger('mouse');
+      this.moveCamera();
     }
   }
 
@@ -70,11 +80,32 @@ export default class Controls extends EventEmitter {
 
   onMousewheel(e) {
     this.deltaZ = e.deltaY;
-    this.trigger('mouse');
+    this.trigger('mouse:wheel');
+
+    this.moveCamera();
   }
 
   onResize() {
     const {displayWidth, displayHeight} = resizeCanvas(this.canvas);
-    this.trigger('resize', [{width: displayWidth, height: displayHeight}]);
+    this.trigger('canvas:resize', [{width: displayWidth, height: displayHeight}]);
+
+    this.camera.aspect = displayWidth / displayHeight;
+    this.camera.updateProjection();
+    this.camera.updateTransform();
+  }
+
+  moveCamera() {
+    let {deltaX, deltaY, deltaZ, camera, cameraController} = this;
+    let {isTruck, moveSpeed} = cameraController;
+  
+    if (isTruck) {
+      camera.truck(-deltaX * 0.01 * moveSpeed);
+      camera.pedestal(deltaY * 0.01 * moveSpeed);
+      camera.dolly(deltaZ * 0.05 * moveSpeed);
+    } else {
+      camera.pan(deltaX * 0.001 * moveSpeed);
+      camera.tilt(deltaY * 0.001 * moveSpeed);
+      camera.cant(deltaZ * 0.05 * moveSpeed);
+    }
   }
 }

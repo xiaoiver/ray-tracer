@@ -8,12 +8,22 @@ export default class Shader {
 
   init(gl, scene) {
     this.gl = gl;
+    this.initShaders(gl, scene);
+    this.initScene(scene);
+    this.inited = true;
+  }
+
+  initShaders(gl, scene) {
     const {vertexShader, fragmentShader} = this.generateShaders(scene);
     if (!initShaders(gl, vertexShader, fragmentShader)) {
       console.log('Failed to intialize shaders.');
-      return;
     }
-    this.inited = true;
+  }
+
+  initScene(scene) {
+    scene.objects.forEach(object => {
+      object.init();
+    });
   }
 
   generateShaders(scene) {}
