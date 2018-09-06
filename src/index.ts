@@ -12,8 +12,7 @@ import Cube from './geometry/Cube';
 import AmbientLight from './light/AmbientLight';
 import PointLight from './light/PointLight';
 import SpotLight from './light/SpotLight';
-import CubeShader from './shaders/CubeShader';
-import Shader from './shaders/Shader';
+import DisplayShader from './shaders/DisplayShader';
 // import RayTracer from './shaders/RayTracer';
 
 const $canvas = <HTMLCanvasElement> document.getElementById('webgl');
@@ -59,22 +58,22 @@ scene.add(new Mesh({
 scene.addLight(new AmbientLight({
   color: $V([0.2, 0.2, 0.2])
 }));
-scene.addLight(new PointLight({
-  color: $V([0.8, 0.8, 0.8]),
-  position: $V([0, 0, 4]),
-  attenuation: {
-    linear: 0.1,
-    quadratic: 0.01
-  }
-}));
-scene.addLight(new PointLight({
-  color: $V([1, 0, 1]),
-  position: $V([6, 0, 0]),
-  attenuation: {
-    linear: 0.1,
-    quadratic: 0.01
-  }
-}));
+// scene.addLight(new PointLight({
+//   color: $V([0.8, 0.8, 0.8]),
+//   position: $V([0, 0, 4]),
+//   attenuation: {
+//     linear: 0.1,
+//     quadratic: 0.01
+//   }
+// }));
+// scene.addLight(new PointLight({
+//   color: $V([1, 0, 1]),
+//   position: $V([6, 0, 0]),
+//   attenuation: {
+//     linear: 0.1,
+//     quadratic: 0.01
+//   }
+// }));
 scene.addLight(new SpotLight({
   color: $V([1, 1, 1]),
   position: $V([0, 4, 0]),
@@ -88,7 +87,7 @@ scene.addLight(new SpotLight({
 }));
 
 const camera = new Camera($V([5.0, 5.0, 5.0]), 55, aspect, 0.1, 100);
-const shader = new CubeShader();
+const shader = new DisplayShader();
 
 const controls = new Controls({
   canvas: $canvas,

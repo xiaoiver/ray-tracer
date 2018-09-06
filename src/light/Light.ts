@@ -10,6 +10,7 @@ export interface LightOptions {
   color: Vector;
   position?: Vector;
   attenuation?: Attenuation
+  shadowEnabled?: boolean;
 }
 
 export interface ILight extends LightOptions {
@@ -36,6 +37,7 @@ export abstract class Light implements ILight, ILightShader {
   color: Vector;
   position: Vector;
   attenuation: Attenuation;
+  shadowEnabled: boolean = false;
   public abstract declare(): string;
   public abstract calculate(): string;
   public abstract result(): string;

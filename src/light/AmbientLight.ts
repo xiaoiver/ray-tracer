@@ -7,6 +7,7 @@ interface AmbientLightOptions extends LightOptions {};
 export default class AmbientLight extends Light {
   uColor: string;
   vColor: string;
+  readonly shadowEnabled: boolean = false;
 
   constructor(options: AmbientLightOptions) {
     super(options);

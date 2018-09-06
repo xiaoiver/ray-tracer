@@ -19,6 +19,7 @@ export default class SpotLight extends Light {
   angle: number;
   exponent: number;
   blur: number;
+  shadowEnabled: boolean = true;
 
   uColor: string;
   uPosition: string;

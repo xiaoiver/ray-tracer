@@ -8,6 +8,7 @@ export default class PointLight extends Light {
   uColor: string;
   uPosition: string;
   vColor: string;
+  shadowEnabled: boolean = true;
 
   constructor(options: PointLightOptions) {
     super(options);

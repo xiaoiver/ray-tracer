@@ -68,8 +68,11 @@ export default class CubeShader extends Shader {
     };
   }
 
-  draw(scene: Scene, camera: Camera) {
+  draw(scene: Scene, camera: Camera, canvas: HTMLCanvasElement) {
     const gl = this.gl;
+    gl.useProgram(this.program);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.viewport(0, 0, canvas.width, canvas.height);
 
     scene.lights.forEach(light => {
       light.setUniforms(this);
