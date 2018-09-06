@@ -1,13 +1,45 @@
 import * as dat from 'dat.gui';
-import EventEmitter from 'wolfy87-eventemitter';
+import { EventEmitter } from 'eventemitter3';
 import { canvasMousePos, resizeCanvas } from './utils/dom';
+import Scene from './Scene';
+import Camera from './Camera';
+import SpotLight from './light/SpotLight';
+
+interface ILightControl {
+  spotLight: {
+    angle: number;
+    blur: number;
+  }
+}
+
+interface ICameraControl {
+  isTruck: boolean;
+  moveSpeed: number;
+}
+
+interface ControlOptions {
+  canvas: HTMLCanvasElement;
+  camera: Camera;
+  scene: Scene;
+}
 
 export default class Controls extends EventEmitter {
-  constructor({canvas, camera, scene}) {
+  canvas: HTMLCanvasElement;
+  camera: Camera;
+  scene: Scene;
+  cameraController: ICameraControl;
+  lightController: ILightControl;
+
+  isMoving: boolean;
+  lastX: number;
+  lastY: number;
+  deltaX: number;
+  deltaY: number;
+  deltaZ: number;
+
+  constructor(options: ControlOptions) {
     super();
-    this.canvas = canvas;
-    this.camera = camera;
-    this.scene = scene;
+    Object.assign(this, options);
 
     this.isMoving = false;
     this.lastX = -1;
@@ -22,7 +54,10 @@ export default class Controls extends EventEmitter {
     };
 
     this.lightController = {
-
+      spotLight: {
+        angle: 14,
+        blur: 2
+      }
     };
 
     this.onMousedown = this.onMousedown.bind(this);
@@ -32,11 +67,11 @@ export default class Controls extends EventEmitter {
     this.onMousewheel = this.onMousewheel.bind(this);
     this.onResize = this.onResize.bind(this);
 
-    canvas.addEventListener('mousedown', this.onMousedown, false);
-    canvas.addEventListener('mousemove', this.onMousemove, false);
-    canvas.addEventListener('mouseup', this.onMouseup, false);
-    canvas.addEventListener('mouseout', this.onMouseout, false);
-    canvas.addEventListener('wheel', this.onMousewheel, false);
+    this.canvas.addEventListener('mousedown', this.onMousedown, false);
+    this.canvas.addEventListener('mousemove', this.onMousemove, false);
+    this.canvas.addEventListener('mouseup', this.onMouseup, false);
+    this.canvas.addEventListener('mouseout', this.onMouseout, false);
+    this.canvas.addEventListener('wheel', this.onMousewheel, false);
     window.addEventListener('resize', this.onResize, false);
 
     const gui = new dat.GUI();
@@ -44,11 +79,15 @@ export default class Controls extends EventEmitter {
     cameraFolder.add(this.cameraController, 'isTruck');
     cameraFolder.add(this.cameraController, 'moveSpeed', 0.1, 2);
 
+    // this.initLightControl
+
     const lightFolder = gui.addFolder('light');
+    lightFolder.add(this.lightController.spotLight, 'angle', 10, 30).onChange(this.changeLight.bind(this));
+    lightFolder.add(this.lightController.spotLight, 'blur', 2, 10).onChange(this.changeLight.bind(this));
     gui.open();
   }
 
-  onMousedown(e) {
+  onMousedown(e: MouseEvent) {
     let {x, y} = canvasMousePos(e, this.canvas);
 
     this.lastX = x;
@@ -57,7 +96,7 @@ export default class Controls extends EventEmitter {
     this.deltaZ = 0;
   }
 
-  onMousemove(e) {
+  onMousemove(e: MouseEvent) {
     if (this.isMoving) {
       let {x, y} = canvasMousePos(e, this.canvas);
       this.deltaX = x - this.lastX;
@@ -66,28 +105,30 @@ export default class Controls extends EventEmitter {
       this.lastX = x;
       this.lastY = y;
 
+      this.emit('mouse:moving');
+
       this.moveCamera();
     }
   }
 
-  onMouseup(e) {
+  onMouseup(e: MouseEvent) {
     this.isMoving = false;
   }
 
-  onMouseout(e) {
+  onMouseout(e: MouseEvent) {
     this.isMoving = false;
   }
 
-  onMousewheel(e) {
+  onMousewheel(e: WheelEvent) {
     this.deltaZ = e.deltaY;
-    this.trigger('mouse:wheel');
+    this.emit('mouse:wheel');
 
     this.moveCamera();
   }
 
   onResize() {
     const {displayWidth, displayHeight} = resizeCanvas(this.canvas);
-    this.trigger('canvas:resize', [{width: displayWidth, height: displayHeight}]);
+    this.emit('canvas:resize', [{width: displayWidth, height: displayHeight}]);
 
     this.camera.aspect = displayWidth / displayHeight;
     this.camera.updateProjection();
@@ -107,5 +148,13 @@ export default class Controls extends EventEmitter {
       camera.tilt(deltaY * 0.001 * moveSpeed);
       camera.cant(deltaZ * 0.05 * moveSpeed);
     }
+  }
+
+  changeLight() {
+    let spotLight = <SpotLight> this.scene.lights[this.scene.lights.length - 1];
+    spotLight.angle = this.lightController.spotLight.angle;
+    spotLight.blur = this.lightController.spotLight.blur;
+
+    this.emit('shader:refresh');
   }
 }

@@ -60,7 +60,7 @@ Vector.prototype.componentDivide = function(vector) {
 };
 
 Vector.min = function(a, b) {
-  if(a.length != b.length) {
+  if(a.elements.length != b.elements.length) {
     return null;
   }
   var newElements = [];
@@ -71,7 +71,7 @@ Vector.min = function(a, b) {
 };
 
 Vector.max = function(a, b) {
-  if(a.length != b.length) {
+  if(a.elements.length != b.elements.length) {
     return null;
   }
   var newElements = [];

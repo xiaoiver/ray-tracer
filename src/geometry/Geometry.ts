@@ -1,8 +1,25 @@
 import { Matrix } from 'sylvester';
 
-export default class Geometry {
-  constructor({color = $V([1, 1, 1])} = {}) {
-    this.color = color;
+export interface GeometryOptions {
+  color?: Vector;
+}
+
+const DEFAULT_GEOMETRY_OPTIONS : GeometryOptions = {
+  color: $V([1, 1, 1])
+};
+
+export abstract class Geometry {
+  color: Vector;
+  vertices: Float32Array;
+  normals: Float32Array;
+  colors: Float32Array;
+  indices: Uint8Array | Uint16Array;
+  modelMatrix: Matrix;
+  protected abstract setVertices(): void;
+  protected abstract setModelMatrix(): void;
+
+  constructor(options: GeometryOptions) {
+    Object.assign(this, DEFAULT_GEOMETRY_OPTIONS, options);
     this.modelMatrix = Matrix.I(4);
   }
 
@@ -12,22 +29,9 @@ export default class Geometry {
     this.setColors();
   }
 
-  /**
-   * @override
-   */
-  setVertices() {}
-
-  /**
-   * @override
-   */
   setColors() {
     this.colors = this.vertices.map((v, i) => this.color.e(i % 3 + 1));
   }
-
-  /**
-   * @override
-   */
-  setModelMatrix() {}
 
   /**
    * pay attention to the order to multiply matrices
@@ -36,7 +40,7 @@ export default class Geometry {
    * @param {Vector} v translation vector
    * @return {Geometry} self
    */
-  translate(v) {
+  translate(v: Vector) {
     this.modelMatrix = Matrix.Translation(v).x(this.modelMatrix);
     return this;
   }
@@ -47,7 +51,7 @@ export default class Geometry {
    * @param {Vector} v scale vector
    * @return {Geometry} self
    */
-  scale(v) {
+  scale(v: Vector) {
     this.modelMatrix = Matrix.Diagonal(v.elements.concat(1)).x(this.modelMatrix);
     return this;
   }
@@ -56,15 +60,15 @@ export default class Geometry {
    * pay attention to the order to multiply matrices
    * 
    * @param {number} angle rotation angle
-   * @param {Line} axis rotation axis
+   * @param {Vector} axis rotation axis
    * @return {Geometry} self
    */
-  rotate(angle, axis) {
+  rotate(angle: number, axis: Vector) {
     this.modelMatrix = Matrix.Rotation(angle, axis).x(this.modelMatrix);
     return this;
   }
 
-  draw(gl) {
+  draw(gl: WebGLRenderingContext) {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     var indexBuffer = gl.createBuffer();

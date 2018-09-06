@@ -1,10 +1,21 @@
-import { Matrix } from 'sylvester';
+import { Matrix, Vector } from 'sylvester';
 
 /**
  * http://learnwebgl.brown37.net/07_cameras/camera_linear_motion.html
  */
 export default class Camera {
-  constructor(eye, fovy, aspect, znear, zfar) {
+  eye: Vector;
+  center: Vector;
+  up: Vector;
+  fovy: number;
+  aspect: number;
+  znear: number;
+  zfar: number;
+  projection: Matrix;
+  view: Matrix;
+  transform: Matrix;
+
+  constructor(eye: Vector, fovy: number, aspect: number, znear: number, zfar: number) {
     this.eye = eye;
     this.center = $V([0, 0, 0]);
     this.up = $V([0, 1, 0]);
@@ -26,7 +37,7 @@ export default class Camera {
    * @param {*} zfar 
    * @return {Matrix} projection matrix
    */
-  perspective(fovy, aspect, znear, zfar) {
+  perspective(fovy: number, aspect: number, znear: number, zfar: number) {
     const top = znear * Math.tan(fovy * Math.PI / 360.0);
     const bottom = -top;
     const left = bottom * aspect;
@@ -46,7 +57,7 @@ export default class Camera {
       [0, 0, -1, 0]]);
   }
 
-  lookAt(eye, center, up) {
+  lookAt(eye: Vector, center: Vector, up: Vector) {
     const z = eye.subtract(center).toUnitVector();
     const x = up.cross(z).toUnitVector();
     const y = z.cross(x).toUnitVector();
@@ -69,7 +80,7 @@ export default class Camera {
    * 
    * @param {number} distance
    */
-  truck(distance) {
+  truck(distance: number) {
     // Calculate the n camera axis
     const n = this.eye.subtract(this.center).toUnitVector();
 
@@ -90,7 +101,7 @@ export default class Camera {
    * 
    * @param {number} distance
    */
-  pedestal(distance) {
+  pedestal(distance: number) {
     // Calculate the n camera axis
     const n = this.eye.subtract(this.center).toUnitVector();
 
@@ -112,7 +123,7 @@ export default class Camera {
    * 
    * @param {number} distance
    */
-  dolly(distance) {
+  dolly(distance: number) {
     let n = this.eye.subtract(this.center).toUnitVector();
 
     n = n.x(distance);
@@ -128,7 +139,7 @@ export default class Camera {
    * 
    * @param {number} angle
    */
-  tilt(angle) {
+  tilt(angle: number) {
     // Calculate the n camera axis
     const n = this.eye.subtract(this.center).toUnitVector();
 
@@ -165,7 +176,7 @@ export default class Camera {
    * 
    * @param {number} angle
    */
-  pan(angle) {
+  pan(angle: number) {
     // Calculate the v camera axis
     const n = this.eye.subtract(this.center).toUnitVector();
     const u = this.up.cross(n).toUnitVector();
@@ -187,7 +198,7 @@ export default class Camera {
    * 
    * @param {number} angle
    */
-  cant(angle) {
+  cant(angle: number) {
     const n = this.eye.subtract(this.center).toUnitVector();
     let newCenter = this.center.subtract(this.eye);
     const cantMatrix = Matrix.Rotation(angle, n);

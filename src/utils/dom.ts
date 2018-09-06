@@ -1,21 +1,21 @@
-function elementPos(element) {
-  var x = 0, y = 0;
-  while(element.offsetParent) {
+function elementPos(element: HTMLElement) : {x: number, y: number} {
+  let x = 0, y = 0;
+  while (element.offsetParent) {
     x += element.offsetLeft;
     y += element.offsetTop;
-    element = element.offsetParent;
+    element = <HTMLElement> element.offsetParent;
   }
-  return { x: x, y: y };
+  return { x, y };
 }
 
-function eventPos(event) {
+function eventPos(event: MouseEvent) {
   return {
     x: event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft,
     y: event.clientY + document.body.scrollTop + document.documentElement.scrollTop
   };
 }
 
-export function canvasMousePos(event, canvas) {
+export function canvasMousePos(event: MouseEvent, canvas: HTMLCanvasElement) {
   var mousePos = eventPos(event);
   var canvasPos = elementPos(canvas);
   return {
@@ -24,7 +24,7 @@ export function canvasMousePos(event, canvas) {
   };
 }
 
-export function resizeCanvas(canvas) {
+export function resizeCanvas(canvas: HTMLCanvasElement) : {displayWidth: number, displayHeight: number} {
   // https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
   const realToCSSPixels = window.devicePixelRatio;
   const displayWidth  = Math.floor(canvas.clientWidth  * realToCSSPixels);

@@ -1,4 +1,6 @@
 import { Matrix, Vector } from 'sylvester';
+import Camera from '../Camera';
+import Scene from '../Scene';
 import Shader from './Shader';
 
 export default class CubeShader extends Shader {
@@ -6,7 +8,7 @@ export default class CubeShader extends Shader {
     super();
   }
 
-  generateShaders(scene) {
+  generateShaders(scene: Scene) {
     let vertexShader = `
       attribute vec4 a_Position;
       attribute vec4 a_Color;
@@ -25,10 +27,10 @@ export default class CubeShader extends Shader {
       }
     `;
 
-    let lightsDeclarations = [];
-    let lightsCalculations = [];
+    let lightsDeclarations : Array<string> = [];
+    let lightsCalculations : Array<string> = [];
     // ambient + diffuse + specular
-    let lightsResults = [];
+    let lightsResults : Array<string> = [];
     scene.lights.forEach(light => {
       lightsDeclarations.push(light.declare());
       lightsCalculations.push(light.calculate());
@@ -66,7 +68,7 @@ export default class CubeShader extends Shader {
     };
   }
 
-  draw(scene, camera) {
+  draw(scene: Scene, camera: Camera) {
     const gl = this.gl;
 
     scene.lights.forEach(light => {
@@ -74,8 +76,8 @@ export default class CubeShader extends Shader {
     });
 
     let vpMatrix = camera.transform;
-    scene.objects.forEach(object => {
-      let {vertices, colors, normals, modelMatrix} = object;
+    scene.objects.forEach(mesh => {
+      let {vertices, colors, normals, modelMatrix} = mesh.geometry;
       let mvpMatrix = vpMatrix.x(modelMatrix);
       let normalMatrix = modelMatrix.inverse().transpose();
 
@@ -91,7 +93,7 @@ export default class CubeShader extends Shader {
       if (!this.setVertexAttribute('a_Color', colors, 3, gl.FLOAT)) return -1;
       if (!this.setVertexAttribute('a_Normal', normals, 3, gl.FLOAT)) return -1;
 
-      object.draw(gl);
+      mesh.geometry.draw(gl);
     });
   }
 }

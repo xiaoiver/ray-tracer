@@ -1,8 +1,15 @@
-import Light from './Light';
-import {UNIFORM_POINT_LIGHT_COLOR, UNIFORM_POINT_LIGHT_POSITION} from '../constants';
+import { Light, LightOptions } from './Light';
+import { UNIFORM_POINT_LIGHT_COLOR, UNIFORM_POINT_LIGHT_POSITION } from '../constants/index';
+import Shader from '../shaders/Shader';
+
+interface PointLightOptions extends LightOptions {};
 
 export default class PointLight extends Light {
-  constructor(options) {
+  uColor: string;
+  uPosition: string;
+  vColor: string;
+
+  constructor(options: PointLightOptions) {
     super(options);
 
     this.uColor = `${UNIFORM_POINT_LIGHT_COLOR}${this.index}`;
@@ -36,7 +43,7 @@ export default class PointLight extends Light {
     return `${this.vColor}`;
   }
 
-  setUniforms(shader) {
+  setUniforms(shader: Shader) {
     shader.setUniforms({
       [this.uColor]: this.color,
       [this.uPosition]: this.position

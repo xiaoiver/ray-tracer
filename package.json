@@ -2,7 +2,7 @@
   "name": "ray-tracer",
   "version": "1.0.0",
   "description": "A simple ray-tracer implemented in WebGL",
-  "main": "index.js",
+  "main": "src/index.ts",
   "scripts": {
     "watch": "webpack --watch",
     "start": "webpack-dev-server --open",
@@ -19,14 +19,20 @@
   },
   "homepage": "https://github.com/xiaoiver/ray-tracer#readme",
   "devDependencies": {
+    "@types/dat.gui": "^0.7.1",
+    "@types/lodash.assign": "^4.2.4",
+    "@types/stats.js": "^0.17.0",
+    "ts-loader": "^5.0.0",
+    "typescript": "^3.0.3",
     "webpack": "^4.17.1",
     "webpack-cli": "^3.1.0",
     "webpack-dev-server": "^3.1.7"
   },
   "dependencies": {
     "dat.gui": "^0.7.2",
+    "eventemitter3": "^3.1.0",
+    "lodash.assign": "^4.2.0",
     "stats.js": "^0.17.0",
-    "sylvester": "^0.0.21",
-    "wolfy87-eventemitter": "^5.2.5"
+    "sylvester": "^0.0.21"
   }
 }

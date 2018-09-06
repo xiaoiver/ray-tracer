@@ -1,6 +1,4 @@
-import { Matrix, Vector } from 'sylvester';
-
-export function getWebGLContext(canvas) {
+export function getWebGLContext(canvas: HTMLCanvasElement) {
   const names = ['webgl', 'experimental-webgl'];
   let context = null;
   for (var i = 0; i < names.length; ++i) {
@@ -14,7 +12,7 @@ export function getWebGLContext(canvas) {
   return context;
 }
 
-function loadShader(gl, type, source) {
+function loadShader(gl: WebGLRenderingContext, type: number, source: string) {
   // Create shader object
   const shader = gl.createShader(type);
   if (shader == null) {
@@ -40,7 +38,7 @@ function loadShader(gl, type, source) {
   return shader;
 }
 
-function createProgram(gl, vshader, fshader) {
+function createProgram(gl: WebGLRenderingContext, vshader: string, fshader: string) {
   // Create shader object
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader);
   const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader);
@@ -74,7 +72,7 @@ function createProgram(gl, vshader, fshader) {
   return program;
 }
 
-export function initShaders(gl, vshader, fshader) {
+export function initShaders(gl: WebGLRenderingContext, vshader: string, fshader: string) {
   const program = createProgram(gl, vshader, fshader);
   if (!program) {
     console.log('Failed to create program.');
@@ -82,7 +80,6 @@ export function initShaders(gl, vshader, fshader) {
   }
 
   gl.useProgram(program);
-  gl.program = program;
 
-  return true;
+  return program;
 }

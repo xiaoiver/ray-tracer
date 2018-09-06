@@ -1,13 +1,23 @@
-// import U_SPHERE from '../constants';
 import { Matrix } from 'sylvester';
-import Geometry from './Geometry';
+import { GeometryOptions, Geometry } from './Geometry';
+
+interface SphereOptions extends GeometryOptions {
+  center?: Vector;
+  radius?: number;
+}
+
+const DEFAULT_SPHERE_OPTIONS : SphereOptions = {
+  center: $V([0.0, 0.0, 0.0]),
+  radius: 1
+};
 
 export default class Sphere extends Geometry {
-  constructor(options = {}) {
+  center: Vector;
+  radius: number;
+
+  constructor(options: SphereOptions = DEFAULT_SPHERE_OPTIONS) {
     super(options);
-    let {center = $V([0.0, 0.0, 0.0]), radius = 1} = options;
-    this.center = center;
-    this.radius = radius;
+    Object.assign(this, options);
   }
 
   setVertices() {
@@ -58,7 +68,7 @@ export default class Sphere extends Geometry {
   }
 
   setModelMatrix() {
-    this.scale($V(new Array(3).fill(this.radius)));
+    this.scale($V(new Array<number>(3).fill(this.radius)));
     this.translate(this.center);
   }
 

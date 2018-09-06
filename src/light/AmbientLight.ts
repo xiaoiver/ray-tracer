@@ -1,10 +1,15 @@
-import Light from './Light';
-import {UNIFORM_AMBIENT_LIGHT_COLOR} from '../constants';
+import { UNIFORM_AMBIENT_LIGHT_COLOR } from '../constants/index';
+import { LightOptions, Light } from './Light';
+import Shader from '../shaders/Shader';
+
+interface AmbientLightOptions extends LightOptions {};
 
 export default class AmbientLight extends Light {
-  constructor(options) {
+  uColor: string;
+  vColor: string;
+
+  constructor(options: AmbientLightOptions) {
     super(options);
-    this.color = options.color;
     this.uColor = `${UNIFORM_AMBIENT_LIGHT_COLOR}${this.index}`;
     this.vColor = `v_${UNIFORM_AMBIENT_LIGHT_COLOR}${this.index}`;
   }
@@ -21,7 +26,7 @@ export default class AmbientLight extends Light {
     return `${this.vColor}`;
   }
 
-  setUniforms(shader) {
+  setUniforms(shader: Shader) {
     shader.setUniforms({
       [this.uColor]: this.color
     });

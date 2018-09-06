@@ -1,14 +1,29 @@
 import { Matrix } from 'sylvester';
-import Geometry from './Geometry';
+import { GeometryOptions, Geometry } from './Geometry';
+
+interface CubeOptions extends GeometryOptions {
+  center?: Vector;
+  width?: number;
+  height?: number;
+  depth?: number;
+}
+
+const DEFAULT_CUBE_OPTIONS : CubeOptions = {
+  width: 2,
+  height: 2,
+  depth: 2,
+  center: $V([0.0, 0.0, 0.0])
+};
 
 export default class Cube extends Geometry {
-  constructor(options = {}) {
+  center: Vector;
+  width: number;
+  height: number;
+  depth: number;
+
+  constructor(options: CubeOptions = DEFAULT_CUBE_OPTIONS) {
     super(options);
-    const {width = 2, height = 2, depth = 2, center = $V([0.0, 0.0, 0.0])} = options;
-    this.width = width;
-    this.height = height;
-    this.depth = depth;
-    this.center = center;
+    Object.assign(this, options);
   }
 
   setVertices() {

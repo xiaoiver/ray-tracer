@@ -1,36 +1,51 @@
 import { Matrix, Vector } from 'sylvester';
-import { setUniforms, initShaders } from '../utils/gl';
+import { initShaders } from '../utils/gl';
+import Camera from '../Camera';
+import Scene from '../Scene';
 
-export default class Shader {
+export interface IShader {
+  gl: WebGLRenderingContext;
+  program?: WebGLProgram;
+  inited: boolean;
+  init(gl: WebGLRenderingContext, scene: Scene): void;
+  setVertexAttribute(attribute: string, data: any, num: number, type: number): boolean;
+  setUniforms(uniforms: any): void;
+}
+
+export default abstract class Shader implements IShader {
+  inited: boolean;
+  gl: WebGLRenderingContext;
+  program: WebGLProgram;
+
+  protected abstract generateShaders(scene: Scene): {
+    vertexShader: string;
+    fragmentShader: string;
+  };
+
+  public abstract draw(scene: Scene, camera: Camera): void;
+
   constructor() {
     this.inited = false;
   }
 
-  init(gl, scene) {
+  init(gl: WebGLRenderingContext, scene: Scene) {
     this.gl = gl;
-    this.initShaders(gl, scene);
-    this.initScene(scene);
+    if (this.program) {
+      gl.deleteProgram(this.program);
+    }
+    this.initShaders(scene);
     this.inited = true;
   }
 
-  initShaders(gl, scene) {
-    const {vertexShader, fragmentShader} = this.generateShaders(scene);
-    if (!initShaders(gl, vertexShader, fragmentShader)) {
+  initShaders(scene: Scene) {
+    const { vertexShader, fragmentShader } = this.generateShaders(scene);
+    this.program = initShaders(this.gl, vertexShader, fragmentShader);
+    if (!this.program) {
       console.log('Failed to intialize shaders.');
     }
   }
 
-  initScene(scene) {
-    scene.objects.forEach(object => {
-      object.init();
-    });
-  }
-
-  generateShaders(scene) {}
-
-  draw(scene, camera) {}
-
-  setVertexAttribute(attribute, data, num, type) {
+  setVertexAttribute(attribute: string, data: any, num: number, type: number) {
     const gl = this.gl;
     // Create a buffer object
     var buffer = gl.createBuffer();
@@ -42,7 +57,7 @@ export default class Shader {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     // Assign the buffer object to the attribute variable
-    var a_attribute = gl.getAttribLocation(gl.program, attribute);
+    var a_attribute = gl.getAttribLocation(this.program, attribute);
     if (a_attribute < 0) {
       console.log('Failed to get the storage location of ' + attribute);
       return false;
@@ -54,12 +69,11 @@ export default class Shader {
     return true;
   }
   
-  setUniforms(uniforms) {
+  setUniforms(uniforms: any) {
     const gl = this.gl;
-    let program = gl.program;
     for (let name in uniforms) {
       const value = uniforms[name];
-      const location = gl.getUniformLocation(program, name);
+      const location = gl.getUniformLocation(this.program, name);
       if (location == null) continue;
       if (value instanceof Vector) {
         gl.uniform3fv(location, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
