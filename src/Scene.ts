@@ -2,7 +2,7 @@ import { Light } from './light/Light';
 import Mesh from './Mesh';
 
 export default class Scene {
-  objects: Array<Mesh> = [];
+  meshes: Array<Mesh> = [];
   lights: Array<Light> = [];
   inited: boolean;
 
@@ -10,8 +10,8 @@ export default class Scene {
     this.inited = false;
   }
 
-  add(object: Mesh) {
-    this.objects.push(object);
+  addMesh(mesh: Mesh) {
+    this.meshes.push(mesh);
   }
 
   addLight(light: Light) {
@@ -19,8 +19,8 @@ export default class Scene {
   }
 
   init() {
-    this.objects.forEach(object => {
-      object.geometry.init();
+    this.meshes.forEach(mesh => {
+      mesh.geometry.init();
     });
     this.inited = true;
   }

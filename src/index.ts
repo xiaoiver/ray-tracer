@@ -9,6 +9,7 @@ import Camera from './Camera';
 import Mesh from './Mesh';
 import Sphere from './geometry/Sphere';
 import Cube from './geometry/Cube';
+import Plane from './geometry/Plane';
 import AmbientLight from './light/AmbientLight';
 import PointLight from './light/PointLight';
 import SpotLight from './light/SpotLight';
@@ -29,43 +30,63 @@ $stats.style.top = '0px';
 document.getElementById('stats').appendChild($stats);
 
 const scene = new Scene();
-scene.add(new Mesh({
-  geometry: new Cube()
-}));
-scene.add(new Mesh({
+// scene.addMesh(new Mesh({
+//   geometry: new Cube()
+// }));
+// scene.addMesh(new Mesh({
+//   geometry: new Cube({
+//     center: $V([0, 1.5, 0]),
+//     width: 1,
+//     height: 1,
+//     depth: 1
+//   })
+// }));
+scene.addMesh(new Mesh({
   geometry: new Cube({
-    center: $V([0, 1.5, 0]),
-    width: 1,
-    height: 1,
-    depth: 1
+    center: $V([0, 0.2, 0]),
+    width: 0.4,
+    height: 0.4,
+    depth: 0.4
   })
 }));
-scene.add(new Mesh({
-  geometry: new Cube({
-    center: $V([0, -1.1, 0]),
-    width: 5,
-    height: 0.2,
-    depth: 5
+scene.addMesh(new Mesh({
+  geometry: new Plane({
+    width: 10,
+    height: 10
   })
 }));
-scene.add(new Mesh({
-  geometry: new Sphere({
-    center: $V([0, 0, 1.5]),
-    radius: 0.5
-  })
-}));
+// scene.addMesh(new Mesh({
+//   geometry: new Cube({
+//     center: $V([0, -0.1, 0]),
+//     width: 5,
+//     height: 0.2,
+//     depth: 5
+//   })
+// }));
+// scene.addMesh(new Mesh({
+//   geometry: new Sphere({
+//     center: $V([0, 0, 1.5]),
+//     radius: 0.5
+//   })
+// }));
+// scene.addMesh(new Mesh({
+//   geometry: new Sphere({
+//     center: $V([0, -0.5, 0]),
+//     radius: 0.5
+//   })
+// }));
 
 scene.addLight(new AmbientLight({
   color: $V([0.2, 0.2, 0.2])
 }));
-// scene.addLight(new PointLight({
-//   color: $V([0.8, 0.8, 0.8]),
-//   position: $V([0, 0, 4]),
-//   attenuation: {
-//     linear: 0.1,
-//     quadratic: 0.01
-//   }
-// }));
+scene.addLight(new PointLight({
+  color: $V([0.8, 0.8, 0.8]),
+  position: $V([0, 2, 4]),
+  attenuation: {
+    linear: 0.1,
+    quadratic: 0.01
+  }
+}));
 // scene.addLight(new PointLight({
 //   color: $V([1, 0, 1]),
 //   position: $V([6, 0, 0]),
@@ -74,19 +95,21 @@ scene.addLight(new AmbientLight({
 //     quadratic: 0.01
 //   }
 // }));
-scene.addLight(new SpotLight({
-  color: $V([1, 1, 1]),
-  position: $V([0, 4, 0]),
-  direction: $V([0, -1, 0]),
-  angle: 14,
-  exponent: 40,
-  attenuation: {
-    linear: 0.1,
-    quadratic: 0.01
-  }
-}));
+// scene.addLight(new SpotLight({
+//   color: $V([1, 1, 1]),
+//   // position: $V([-4, 4, 0]),
+//   // direction: $V([1, -1, 0]),
+//   position: $V([0, 4, 0]),
+//   direction: $V([0, -1, 0]),
+//   angle: 14,
+//   exponent: 40,
+//   attenuation: {
+//     linear: 0.1,
+//     quadratic: 0.01
+//   }
+// }));
 
-const camera = new Camera($V([5.0, 5.0, 5.0]), 55, aspect, 0.1, 100);
+const camera = new Camera($V([5.0, 5.0, 5.0]), 60, aspect, 0.01, 100);
 const shader = new DisplayShader();
 
 const controls = new Controls({

@@ -32,6 +32,7 @@ export default class Renderer {
     }
     gl.clearColor(this.clearColor.e(1), this.clearColor.e(2), this.clearColor.e(3), 1.0);
     gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
 
     this.shadowShader = new ShadowShader();
   }
@@ -45,8 +46,6 @@ export default class Renderer {
     if (!scene.inited) {
       scene.init();
     }
-
-    // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
     this.shadowShader.draw(scene, camera);
     this.shader.draw(scene, camera, this.canvas);

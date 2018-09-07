@@ -79,8 +79,10 @@ export default abstract class Shader implements IShader {
       if (location == null) continue;
       if (value instanceof Vector) {
         gl.uniform3fv(location, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
-      } else if(value instanceof Matrix) {
+      } else if (value instanceof Matrix) {
         gl.uniformMatrix4fv(location, false, new Float32Array(value.flatten()));
+      } else if (value % 1 === 0) { // https://stackoverflow.com/questions/3885817/how-do-i-check-that-a-number-is-float-or-integer
+        gl.uniform1i(location, value);
       } else {
         gl.uniform1f(location, value);
       }
@@ -117,6 +119,8 @@ export default abstract class Shader implements IShader {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // gl.texParameteri(gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+    // gl.texParameteri(gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
   
     // Create a renderbuffer object and Set its size and parameters
     depthBuffer = gl.createRenderbuffer(); // Create a renderbuffer object

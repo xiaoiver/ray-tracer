@@ -15,16 +15,12 @@ export default class AmbientLight extends Light {
     this.vColor = `v_${UNIFORM_AMBIENT_LIGHT_COLOR}${this.index}`;
   }
 
-  declare() {
-    return `uniform vec3 ${this.uColor};`;
-  }
-
-  calculate() {
-    return `vec3 ${this.vColor} = ${this.uColor} * v_Color.rgb;`;
-  }
-
-  result() {
-    return `${this.vColor}`;
+  generateSnippets() {
+    this.lightSnippet.fragment = {
+      declaration: `uniform vec3 ${this.uColor};`,
+      calculation: `vec3 ${this.vColor} = ${this.uColor} * v_Color.rgb;`,
+      result: `${this.vColor}`
+    };
   }
 
   setUniforms(shader: Shader) {

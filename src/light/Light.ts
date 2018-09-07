@@ -1,4 +1,5 @@
 import { IShader } from '../shaders/Shader';
+import { IShaderSnippet, IShaderSegment, DEFAULT_SHADER_SNIPPET } from '../shaders/ShaderSnippet';
 
 interface Attenuation {
   constant?: number;
@@ -15,13 +16,10 @@ export interface LightOptions {
 
 export interface ILight extends LightOptions {
   readonly index: number;
+  uniforms: {[name: string]: string};
+  varyings: {[name: string]: string};
+  generateSnippets(): void;
   setUniforms(shader: IShader): void;
-}
-
-interface ILightShader {
-  declare(): string;
-  calculate(): string;
-  result(): string;
 }
 
 let index = 0;
@@ -32,15 +30,19 @@ const DEFAULT_ATTENUATION = {
   quadratic: 0
 };
 
-export abstract class Light implements ILight, ILightShader {
+export abstract class Light implements ILight {
   index: number;
   color: Vector;
   position: Vector;
   attenuation: Attenuation;
   shadowEnabled: boolean = false;
-  public abstract declare(): string;
-  public abstract calculate(): string;
-  public abstract result(): string;
+  uniforms: {[name: string]: string} = {};
+  varyings: {[name: string]: string} = {};
+
+  lightSnippet: IShaderSnippet = Object.assign({}, DEFAULT_SHADER_SNIPPET);
+  shadowSnippet: IShaderSnippet = Object.assign({}, DEFAULT_SHADER_SNIPPET);
+
+  public abstract generateSnippets(): void;
 
   constructor(options: LightOptions) {
     this.index = index++;

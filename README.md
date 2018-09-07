@@ -6,10 +6,10 @@ npm run start
 
 Features:
 - [x] Use API like Three.js
-- [x] Camera movement with mouse
+- [x] Camera movement with mouse, including truck, pedestal, dolly, pan, tilt, cant
 - [x] Resizable canvas 
-- [x] Fundamental scene, including Cube Sphere & Triangles
-- [-] Phong model
+- [x] Fundamental scene, including Cube & Sphere
+- [x] Phong model ambient + diffuse + specular
 - [-] Ray tracing
 - [-] Shadow mapping
 - [-] Offscreen Canvas
