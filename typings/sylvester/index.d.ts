@@ -473,6 +473,8 @@ declare module 'sylvester' {
     setElements(matrix: number[] | number[][] | Vector | Matrix): Matrix;
 
     flatten(): Array<number>;
+    ensure4x4(): Matrix;
+    make3x3(): Matrix;
 
     /**
      * Constructor function.

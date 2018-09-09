@@ -1,6 +1,4 @@
 import { Matrix, Vector } from 'sylvester';
-import Camera from '../Camera';
-import Scene from '../Scene';
 import Shader from './Shader';
 import { IShaderSnippet } from './ShaderSnippet';
 
@@ -12,10 +10,10 @@ export default class DisplayShader extends Shader {
     super();
   }
 
-  generateShaders(scene: Scene) {
+  generateShaders() {
     this.lightSnippets = [];
     this.shadowSnippets = [];
-    scene.lights.forEach(light => {
+    this.scene.lights.forEach(light => {
       light.generateSnippets();
       this.lightSnippets.push(light.lightSnippet);
       this.shadowSnippets.push(light.shadowSnippet);
@@ -83,23 +81,25 @@ export default class DisplayShader extends Shader {
     };
   }
 
-  draw(scene: Scene, camera: Camera, canvas: HTMLCanvasElement) {
+  draw() {
     const gl = this.gl;
-    gl.useProgram(this.program);
-    gl.cullFace(gl.BACK);
+    const {width, height} = this.canvas.getSize();
+    
+    // gl.cullFace(gl.BACK);
+    gl.viewport(0, 0, width, height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.useProgram(this.program);
 
     // Setup camera uniforms
     this.setUniforms({
-      'u_CameraPosition': camera.eye
+      'u_CameraPosition': this.camera.eye
     });
 
-    scene.lights.forEach(light => {
+    this.scene.lights.forEach(light => {
       light.setUniforms(this);
 
-      let vpMatrix = camera.transform;
-      scene.meshes.forEach(mesh => {
+      let vpMatrix = this.camera.transform;
+      this.scene.meshes.forEach(mesh => {
         let {vertices, colors, normals, modelMatrix} = mesh.geometry;
         let mvpMatrix = vpMatrix.x(modelMatrix);
         let normalMatrix = modelMatrix.inverse().transpose();

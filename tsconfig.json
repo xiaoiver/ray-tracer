@@ -9,6 +9,8 @@
     "lib": ["es5", "es6", "dom"],
     "jsx": "react",
     "allowJs": true,
-    "typeRoots": ["typings", "node_modules/@types"]
+    "typeRoots": ["typings", "node_modules/@types"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
 }

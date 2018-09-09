@@ -23,21 +23,3 @@ export function canvasMousePos(event: MouseEvent, canvas: HTMLCanvasElement) {
     y: mousePos.y - canvasPos.y
   };
 }
-
-export function resizeCanvas(canvas: HTMLCanvasElement) : {displayWidth: number, displayHeight: number} {
-  // https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
-  const realToCSSPixels = window.devicePixelRatio;
-  const displayWidth  = Math.floor(canvas.clientWidth  * realToCSSPixels);
-  const displayHeight = Math.floor(canvas.clientHeight * realToCSSPixels);
-
-  // Check if the canvas is not the same size.
-  if (canvas.width !== displayWidth ||
-    canvas.height !== displayHeight) {
-
-    // Make the canvas the same size
-    canvas.width  = displayWidth;
-    canvas.height = displayHeight;
-  }
-
-  return {displayWidth, displayHeight};
-}

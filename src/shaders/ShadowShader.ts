@@ -1,7 +1,6 @@
 import { Matrix } from 'sylvester';
-import Camera from '../Camera';
-import Scene from '../Scene';
 import Shader, { FBO } from './Shader';
+import { Light } from '../light/Light';
 
 const OFFSCREEN_WIDTH = 2048;
 const OFFSCREEN_HEIGHT = 2048;
@@ -35,7 +34,7 @@ export default class ShadowShader extends Shader {
     `;
   }
 
-  generateShaders(scene: Scene) {
+  generateShaders() {
     const vertexShader = `
       attribute vec4 a_Position;
       uniform mat4 u_MvpMatrix;
@@ -56,6 +55,8 @@ export default class ShadowShader extends Shader {
     }
     gl.activeTexture(gl.TEXTURE0); // Set a texture object to the texture unit
     gl.bindTexture(gl.TEXTURE_2D, this.fbo.texture);
+    gl.clearColor(0, 0, 0, 1);
+    gl.enable(gl.DEPTH_TEST);
 
     return {
       vertexShader,
@@ -63,23 +64,26 @@ export default class ShadowShader extends Shader {
     };
   }
 
-  draw(scene: Scene, camera: Camera) {
+  draw() {
     const gl = this.gl;
-    gl.useProgram(this.program);
-    // Change the drawing destination to FBO
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo.framebuffer);
     gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+    // gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // gl.cullFace(gl.FRONT);
+
+    gl.useProgram(this.program);
     
     let viewMatrix: Matrix;
-    const projectionMatrix = camera.perspective(camera.fovy, OFFSCREEN_WIDTH/OFFSCREEN_HEIGHT, camera.znear, camera.zfar);
-    scene.lights.forEach(light => {
+    const projectionMatrix = this.camera.perspective(this.camera.fovy, OFFSCREEN_WIDTH/OFFSCREEN_HEIGHT, this.camera.znear, this.camera.zfar);
+    this.scene.lights.forEach(light => {
       // Calculate shadow map for every light
       if (light.shadowEnabled) {
-        viewMatrix = camera.lookAt(light.position, camera.center, camera.up);
+        // Change the drawing destination to FBO
+        
+        viewMatrix = this.camera.lookAt(light.position, this.camera.center, this.camera.up);
 
-        scene.meshes.forEach(mesh => {
+        this.scene.meshes.forEach(mesh => {
           const {vertices, modelMatrix} = mesh.geometry;
           const mvpMatrixFromLight = projectionMatrix.x(viewMatrix.x(modelMatrix));
 

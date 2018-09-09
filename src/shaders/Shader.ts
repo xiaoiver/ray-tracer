@@ -1,7 +1,10 @@
+import { injectable, inject } from 'inversify';
 import { Matrix, Vector } from 'sylvester';
 import { initShaders } from '../utils/gl';
-import Camera from '../Camera';
-import Scene from '../Scene';
+import SERVICE_IDENTIFIER from '../constants/services';
+import { ICameraService } from '../services/Camera';
+import { ICanvasService } from '../services/Canvas';
+import { ISceneService } from '../services/Scene';
 
 export interface FBO {framebuffer: WebGLFramebuffer, texture: WebGLTexture};
 
@@ -9,38 +12,42 @@ export interface IShader {
   gl: WebGLRenderingContext;
   program?: WebGLProgram;
   inited: boolean;
-  init(gl: WebGLRenderingContext, scene: Scene): void;
+  init(gl: WebGLRenderingContext): void;
   setVertexAttribute(attribute: string, data: any, num: number, type: number): boolean;
   setUniforms(uniforms: any): void;
 }
 
 export default abstract class Shader implements IShader {
+  @inject(SERVICE_IDENTIFIER.ICanvasService) canvas: ICanvasService;
+  @inject(SERVICE_IDENTIFIER.ISceneService) scene: ISceneService;
+  @inject(SERVICE_IDENTIFIER.ICameraService) camera: ICameraService;
+
   inited: boolean;
   gl: WebGLRenderingContext;
   program: WebGLProgram;
 
-  protected abstract generateShaders(scene: Scene): {
+  protected abstract generateShaders(): {
     vertexShader: string;
     fragmentShader: string;
   };
 
-  public abstract draw(scene: Scene, camera: Camera, canvas?: HTMLCanvasElement): void;
+  public abstract draw(): void;
 
   constructor() {
     this.inited = false;
   }
 
-  init(gl: WebGLRenderingContext, scene: Scene) {
+  init(gl: WebGLRenderingContext) {
     this.gl = gl;
     if (this.program) {
       gl.deleteProgram(this.program);
     }
-    this.initShaders(scene);
+    this.initShaders();
     this.inited = true;
   }
 
-  initShaders(scene: Scene) {
-    const { vertexShader, fragmentShader } = this.generateShaders(scene);
+  initShaders() {
+    const { vertexShader, fragmentShader } = this.generateShaders();
     this.program = initShaders(this.gl, vertexShader, fragmentShader);
     if (!this.program) {
       console.log('Failed to intialize shaders.');
@@ -118,9 +125,8 @@ export default abstract class Shader implements IShader {
     }
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    // gl.texParameteri(gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-    // gl.texParameteri(gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   
     // Create a renderbuffer object and Set its size and parameters
     depthBuffer = gl.createRenderbuffer(); // Create a renderbuffer object

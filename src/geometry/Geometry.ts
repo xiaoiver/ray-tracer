@@ -64,7 +64,7 @@ export abstract class Geometry {
    * @return {Geometry} self
    */
   rotate(angle: number, axis: Vector) {
-    this.modelMatrix = Matrix.Rotation(angle, axis).x(this.modelMatrix);
+    this.modelMatrix = Matrix.Rotation(angle, axis).ensure4x4().x(this.modelMatrix);
     return this;
   }
 

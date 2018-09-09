@@ -1,9 +1,39 @@
+import { injectable, inject } from 'inversify';
 import { Matrix, Vector } from 'sylvester';
 
-/**
- * http://learnwebgl.brown37.net/07_cameras/camera_linear_motion.html
- */
-export default class Camera {
+export interface ICameraService {
+  eye: Vector;
+  center: Vector;
+  up: Vector;
+  fovy: number;
+  aspect: number;
+  znear: number;
+  zfar: number;
+
+  projection: Matrix;
+  view: Matrix;
+  transform: Matrix;
+
+  init(eye: Vector, fovy: number, aspect: number, znear: number, zfar: number): void;
+  perspective(fovy: number, aspect: number, znear: number, zfar: number): Matrix;
+  lookAt(eye: Vector, center: Vector, up: Vector): Matrix;
+
+  /**
+   * http://learnwebgl.brown37.net/07_cameras/camera_linear_motion.html
+   */
+  truck(distance: number): void;
+  pedestal(distance: number): void;
+  dolly(distance: number): void;
+  tilt(angle: number): void;
+  pan(angle: number): void;
+  cant(angle: number): void;
+
+  updateProjection(): void;
+  updateTransform(): void;
+}
+
+@injectable()
+export default class Camera implements ICameraService {
   eye: Vector;
   center: Vector;
   up: Vector;
@@ -13,13 +43,14 @@ export default class Camera {
   zfar: number;
   projection: Matrix;
   view: Matrix;
-  transform: Matrix;
+  transform: Matrix= Matrix.I(4);
 
-  constructor(eye: Vector, fovy: number, aspect: number, znear: number, zfar: number) {
+  constructor() {}
+
+  init(eye: Vector, fovy: number, aspect: number, znear: number, zfar: number) {
     this.eye = eye;
     this.center = $V([0, 0, 0]);
     this.up = $V([0, 1, 0]);
-    this.transform = Matrix.I(4);
     this.fovy = fovy;
     this.aspect = aspect;
     this.znear = znear;
@@ -67,10 +98,7 @@ export default class Camera {
                 [z.e(1), z.e(2), z.e(3), 0],
                 [0, 0, 0, 1]]);
 
-    const t = $M([[1, 0, 0, -eye.e(1)],
-                [0, 1, 0, -eye.e(2)],
-                [0, 0, 1, -eye.e(3)],
-                [0, 0, 0, 1]]);
+    const t = Matrix.Translation($V([-eye.e(1), -eye.e(2), -eye.e(3)]));
 
     return m.x(t);
   }

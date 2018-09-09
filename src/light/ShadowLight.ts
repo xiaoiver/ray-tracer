@@ -15,7 +15,7 @@ export default class ShadowLight extends Light {
     const i = this.index;
     return `
       vec3 shadowCoord${i} = (v_PositionFromLight${i}.xyz/v_PositionFromLight${i}.w)/2.0 + 0.5;
-      vec4 rgbaDepth${i} = texture2D(${this.uniforms.u_ShadowMap}, shadowCoord${i}.xy);
+      vec4 rgbaDepth${i} = texture2D(${this.uniforms.uShadowMap}, shadowCoord${i}.xy);
       float depth${i} = rgbaDepth${i}.r;
       float visibility${i} = (shadowCoord${i}.z > depth${i} + 0.005) ? 0.7 : 1.0;
     `;
@@ -25,10 +25,9 @@ export default class ShadowLight extends Light {
     const i = this.index;
     return `
       vec3 shadowCoord${i} = (v_PositionFromLight${i}.xyz/v_PositionFromLight${i}.w) * 0.5 + 0.5;
-      vec4 rgbaDepth${i} = texture2D(${this.uniforms.u_ShadowMap}, shadowCoord${i}.xy);
+      vec4 rgbaDepth${i} = texture2D(${this.uniforms.uShadowMap}, shadowCoord${i}.xy);
       float depth${i} = unpackDepth(rgbaDepth${i});
-      float visibility${i} = (shadowCoord${i}.z > depth${i} + 0.005) ? 0.7 : 1.0;
-      // visibility${i} = 1.0;
+      float visibility${i} = (shadowCoord${i}.z > depth${i} + 0.0015) ? 0.7 : 1.0;
     `;
   }
 
@@ -47,7 +46,7 @@ export default class ShadowLight extends Light {
       },
       fragment: {
         declaration: `
-          uniform sampler2D ${this.uniforms.u_ShadowMap};
+          uniform sampler2D ${this.uniforms.uShadowMap};
           varying vec4 v_PositionFromLight${i};
         `,
         // calculation: this.fragmentCalculation(),

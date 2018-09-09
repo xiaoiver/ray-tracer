@@ -31,7 +31,9 @@
   "dependencies": {
     "dat.gui": "^0.7.2",
     "eventemitter3": "^3.1.0",
+    "inversify": "^4.13.0",
     "lodash.assign": "^4.2.0",
+    "reflect-metadata": "^0.1.12",
     "stats.js": "^0.17.0",
     "sylvester": "^0.0.21"
   }
