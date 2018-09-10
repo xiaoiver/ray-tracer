@@ -10,10 +10,9 @@ Features:
 - [x] Resizable canvas 
 - [x] Fundamental scene, including Cube & Sphere
 - [x] Phong model ambient + diffuse + specular
+- [x] Shadow mapping, including Lerp, PCF
 - [-] Ray tracing
-- [-] Shadow mapping
 - [-] Offscreen Canvas
-
 
 Inspired by following resources:
 - [webglfundamentals-resize-canvas](https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html)

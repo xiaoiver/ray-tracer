@@ -69,8 +69,6 @@ export abstract class Geometry {
   }
 
   draw(gl: WebGLRenderingContext) {
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
     var indexBuffer = gl.createBuffer();
     if (!indexBuffer) {
       console.log('Failed to create the buffer object');
@@ -86,5 +84,8 @@ export abstract class Geometry {
      */
     const type = this.indices.length > 256 ? gl.UNSIGNED_SHORT : gl.UNSIGNED_BYTE;
     gl.drawElements(gl.TRIANGLES, this.indices.length, type, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
   }
 }

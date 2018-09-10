@@ -1,13 +1,24 @@
+import { injectable, inject } from 'inversify';
 import { Matrix, Vector } from 'sylvester';
 import Shader from './Shader';
+import SERVICE_IDENTIFIER from '../constants/services';
 import { IShaderSnippet } from './ShaderSnippet';
+import { ICameraService } from '../services/Camera';
+import { ICanvasService } from '../services/Canvas';
+import { ISceneService } from '../services/Scene';
+import ShadowShader from './ShadowShader';
 
+@injectable()
 export default class DisplayShader extends Shader {
   lightSnippets: Array<IShaderSnippet> = [];
   shadowSnippets: Array<IShaderSnippet> = [];
 
-  constructor() {
-    super();
+  constructor(
+    @inject(SERVICE_IDENTIFIER.ICanvasService) canvas: ICanvasService,
+    @inject(SERVICE_IDENTIFIER.ISceneService) scene: ISceneService,
+    @inject(SERVICE_IDENTIFIER.ICameraService) camera: ICameraService
+  ) {
+    super(canvas, scene, camera);
   }
 
   generateShaders() {
@@ -59,11 +70,7 @@ export default class DisplayShader extends Shader {
         return clamp(radiance, 0.0, 1.0);
       }
 
-      float unpackDepth(const in vec4 rgbaDepth) {
-        const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
-        float depth = dot(rgbaDepth, bitShift);
-        return depth;
-      }
+      ${ShadowShader.functions}
 
       void main() {
         vec3 normal = normalize(v_Normal);
@@ -85,7 +92,6 @@ export default class DisplayShader extends Shader {
     const gl = this.gl;
     const {width, height} = this.canvas.getSize();
     
-    // gl.cullFace(gl.BACK);
     gl.viewport(0, 0, width, height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(this.program);
@@ -95,30 +101,35 @@ export default class DisplayShader extends Shader {
       'u_CameraPosition': this.camera.eye
     });
 
-    this.scene.lights.forEach(light => {
-      light.setUniforms(this);
+    let vpMatrix = this.camera.transform;
 
-      let vpMatrix = this.camera.transform;
-      this.scene.meshes.forEach(mesh => {
-        let {vertices, colors, normals, modelMatrix} = mesh.geometry;
-        let mvpMatrix = vpMatrix.x(modelMatrix);
-        let normalMatrix = modelMatrix.inverse().transpose();
+    // Draw every mesh in current scene
+    this.scene.meshes.forEach(mesh => {
+      let {vertices, colors, normals, modelMatrix} = mesh.geometry;
+      let mvpMatrix = vpMatrix.x(modelMatrix);
+      let normalMatrix = modelMatrix.inverse().transpose();
 
-        // Setup uniforms relative to current model
+      // Setup uniforms relative to current model
+      this.setUniforms({
+        'u_MvpMatrix': mvpMatrix,
+        'u_ModelMatrix': modelMatrix,
+        'u_NormalMatrix': normalMatrix
+      });
+
+      // Setup lights
+      this.scene.lights.forEach(light => {
+        light.setUniforms(this);
         this.setUniforms({
-          'u_MvpMatrix': mvpMatrix,
-          'u_ModelMatrix': modelMatrix,
-          'u_NormalMatrix': normalMatrix,
           [`u_MvpMatrixFromLight${light.index}`]: mesh.mvpMatrixFromLight[light.index]
         });
-
-        // Write the vertex property to buffers (coordinates, colors and normals)
-        if (!this.setVertexAttribute('a_Position', vertices, 3, gl.FLOAT)) return -1;
-        if (!this.setVertexAttribute('a_Color', colors, 3, gl.FLOAT)) return -1;
-        if (!this.setVertexAttribute('a_Normal', normals, 3, gl.FLOAT)) return -1;
-
-        mesh.geometry.draw(gl);
       });
+
+      // Write the vertex property to buffers (coordinates, colors and normals)
+      if (!this.setVertexAttribute('a_Position', vertices, 3, gl.FLOAT)) return -1;
+      if (!this.setVertexAttribute('a_Color', colors, 3, gl.FLOAT)) return -1;
+      if (!this.setVertexAttribute('a_Normal', normals, 3, gl.FLOAT)) return -1;
+
+      mesh.geometry.draw(gl);
     });
   }
 }

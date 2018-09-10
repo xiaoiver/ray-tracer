@@ -16,7 +16,7 @@ export interface MouseData {
 
 @injectable()
 export default class Mouse extends EventEmitter implements IMouseService {
-  @inject(SERVICE_IDENTIFIER.ICanvasService) private canvas: ICanvasService;
+  private canvas: ICanvasService;
 
   private isMoving: boolean = false;
   private lastX: number = -1;
@@ -31,8 +31,11 @@ export default class Mouse extends EventEmitter implements IMouseService {
   static OUT_EVENT = 'mouseout';
   static WHEEL_EVENT = 'mousewheel';
 
-  constructor() {
+  constructor(
+    @inject(SERVICE_IDENTIFIER.ICanvasService) _canvas: ICanvasService
+  ) {
     super();
+    this.canvas = _canvas;
     this.onMousedown = this.onMousedown.bind(this);
     this.onMousemove = this.onMousemove.bind(this);
     this.onMouseup = this.onMouseup.bind(this);
@@ -76,20 +79,20 @@ export default class Mouse extends EventEmitter implements IMouseService {
       this.lastX = x;
       this.lastY = y;
 
-      this.emit(Mouse.MOVE_EVENT, [{
+      this.emit(Mouse.MOVE_EVENT, {
         deltaX: this.deltaX,
         deltaY: this.deltaY,
         deltaZ: this.deltaZ
-      }]);
+      });
     }
   }
 
   onMousewheel(e: WheelEvent) {
     this.deltaZ = e.deltaY;
-    this.emit(Mouse.WHEEL_EVENT, [{
+    this.emit(Mouse.WHEEL_EVENT, {
       deltaX: this.deltaX,
       deltaY: this.deltaY,
       deltaZ: this.deltaZ
-    }]);
+    });
   }
 }

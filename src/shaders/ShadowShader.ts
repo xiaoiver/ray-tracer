@@ -1,37 +1,78 @@
+import { injectable, inject } from 'inversify';
 import { Matrix } from 'sylvester';
 import Shader, { FBO } from './Shader';
 import { Light } from '../light/Light';
+import ShadowLight, { ShadowMode } from '../light/ShadowLight';
+import SERVICE_IDENTIFIER from '../constants/services';
+import { ICameraService } from '../services/Camera';
+import { ICanvasService } from '../services/Canvas';
+import { ISceneService } from '../services/Scene';
+import { IControlsService } from '../services/Controls';
 
 const OFFSCREEN_WIDTH = 2048;
 const OFFSCREEN_HEIGHT = 2048;
 
+@injectable()
 export default class ShadowShader extends Shader {
-  fbo: FBO;
 
-  constructor() {
-    super();
-  }
+  static functions = `
+    vec2 texelSize = vec2(1.0) / vec2(${OFFSCREEN_WIDTH.toFixed(5), OFFSCREEN_HEIGHT.toFixed(5)});
 
-  fragmentCode(): string {
-    return `
-      precision mediump float;
-      void main() {
-        gl_FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 0.0);
+    // high-precision
+    float unpackDepth(const in vec4 rgbaDepth) {
+      const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
+      float depth = dot(rgbaDepth, bitShift);
+      return depth;
+    }
+    float texture2DCompare(sampler2D depths, vec2 uv, float compare){
+      float depth = unpackDepth(texture2D(depths, uv));
+      return (compare > depth + 0.0015) ? 0.7 : 1.0;
+    }
+
+    // lerp
+    float texture2DShadowLerp(sampler2D depths, vec2 uv, float compare){
+      vec2 f = fract(uv);
+      float lb = texture2DCompare(depths, uv + texelSize * vec2(0.0, 0.0), compare);
+      float lt = texture2DCompare(depths, uv + texelSize * vec2(0.0, 1.0), compare);
+      float rb = texture2DCompare(depths, uv + texelSize * vec2(1.0, 0.0), compare);
+      float rt = texture2DCompare(depths, uv + texelSize * vec2(1.0, 1.0), compare);
+      float a = mix(lb, lt, f.y);
+      float b = mix(rb, rt, f.y);
+      float c = mix(a, b, f.x);
+      return c;
+    }
+
+    // pcf
+    float PCF(sampler2D depths, vec2 uv, float compare){
+      float result = 0.0;
+      for (int x = -2; x <= 2; x++) {
+        for (int y = -2; y <= 2; y++) {
+          vec2 off = texelSize * vec2(x,y);
+          result += texture2DCompare(depths, uv + off, compare);
+        }
       }
-    `;
-  }
+      return result / 25.0;
+    }
 
-  hpFragmentCode(): string {
-    return `
-      precision mediump float;
-      void main() {
-        vec4 bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);
-        const vec4 bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);
-        vec4 rgbaDepth = fract(gl_FragCoord.z * bitShift);
-        rgbaDepth -= rgbaDepth.gbaa * bitMask;
-        gl_FragColor = rgbaDepth;
+    // pcf & lerp
+    float PCFLerp(sampler2D depths, vec2 uv, float compare){
+      float result = 0.0;
+      for(int x = -1; x <= 1; x++){
+        for(int y = -1; y <= 1; y++){
+          vec2 off = texelSize * vec2(x,y);
+          result += texture2DShadowLerp(depths, uv + off, compare);
+        }
       }
-    `;
+      return result / 9.0;
+    }
+  `;
+
+  constructor(
+    @inject(SERVICE_IDENTIFIER.ICanvasService) canvas: ICanvasService,
+    @inject(SERVICE_IDENTIFIER.ISceneService) scene: ISceneService,
+    @inject(SERVICE_IDENTIFIER.ICameraService) camera: ICameraService
+  ) {
+    super(canvas, scene, camera);
   }
 
   generateShaders() {
@@ -43,20 +84,54 @@ export default class ShadowShader extends Shader {
       }
     `;
 
-    const fragmentShader = this.hpFragmentCode();
-    // const fragmentShader = this.fragmentCode();
-
     const gl = this.gl;
-    // Initialize framebuffer object (FBO)  
-    this.fbo = <FBO> this.initFramebufferObject(OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-    if (!this.fbo.framebuffer) {
-      console.log('Failed to initialize frame buffer object');
-      return;
+    let fbo: FBO;
+    let fboTextureIdx: number = 0;
+    let shadowMode;
+    
+    this.scene.lights.forEach(light => {
+      if (light instanceof ShadowLight) {
+        // Initialize framebuffer object (FBO)  
+        fbo = <FBO> this.initFramebufferObject(OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+        if (!fbo.framebuffer) {
+          console.log('Failed to initialize frame buffer object');
+          return;
+        }
+        light.fbo = fbo;
+        light.fboTextureIdx = fboTextureIdx++;
+
+        if (fboTextureIdx > 32) {
+          console.log('Exceed the maximum number of textures');
+          return;
+        }
+
+        shadowMode = light.mode;
+      }
+    });
+
+    let fragmentShader;
+    if (shadowMode === ShadowMode.Simple) {
+      fragmentShader = `
+        precision mediump float;
+        void main() {
+          gl_FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 0.0);
+        }
+      `;
+    } else if (shadowMode === ShadowMode.HighPrecision
+      || shadowMode === ShadowMode.Lerp
+      || shadowMode === ShadowMode.PCF
+      || shadowMode === ShadowMode.PCFLerp) {
+      fragmentShader = `
+        precision mediump float;
+        void main() {
+          vec4 bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);
+          const vec4 bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);
+          vec4 rgbaDepth = fract(gl_FragCoord.z * bitShift);
+          rgbaDepth -= rgbaDepth.gbaa * bitMask;
+          gl_FragColor = rgbaDepth;
+        }
+      `;
     }
-    gl.activeTexture(gl.TEXTURE0); // Set a texture object to the texture unit
-    gl.bindTexture(gl.TEXTURE_2D, this.fbo.texture);
-    gl.clearColor(0, 0, 0, 1);
-    gl.enable(gl.DEPTH_TEST);
 
     return {
       vertexShader,
@@ -66,20 +141,23 @@ export default class ShadowShader extends Shader {
 
   draw() {
     const gl = this.gl;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo.framebuffer);
-    gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-    // gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    // gl.cullFace(gl.FRONT);
-
     gl.useProgram(this.program);
     
     let viewMatrix: Matrix;
+    let textureName: string;
     const projectionMatrix = this.camera.perspective(this.camera.fovy, OFFSCREEN_WIDTH/OFFSCREEN_HEIGHT, this.camera.znear, this.camera.zfar);
     this.scene.lights.forEach(light => {
       // Calculate shadow map for every light
-      if (light.shadowEnabled) {
+      if (light instanceof ShadowLight) {
         // Change the drawing destination to FBO
+        textureName = `TEXTURE${light.fboTextureIdx}`;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, light.fbo.framebuffer);
+        gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        // Set a texture object to the texture unit
+        gl.activeTexture((<any>gl)[textureName]);
+        gl.bindTexture(gl.TEXTURE_2D, light.fbo.texture);
         
         viewMatrix = this.camera.lookAt(light.position, this.camera.center, this.camera.up);
 
@@ -98,9 +176,9 @@ export default class ShadowShader extends Shader {
     
           mesh.geometry.draw(gl);
         });
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       }
     });
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 }

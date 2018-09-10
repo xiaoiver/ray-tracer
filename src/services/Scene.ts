@@ -2,7 +2,11 @@ import { injectable, inject } from 'inversify';
 import { Light } from '../light/Light';
 import Mesh from '../Mesh';
 
+let i = 0;
+
 export interface ISceneService {
+  idx: number;
+
   meshes: Array<Mesh>;
   lights: Array<Light>;
   inited: boolean;
@@ -14,12 +18,14 @@ export interface ISceneService {
 
 @injectable()
 export default class Scene implements ISceneService {
+  idx: number;
+
   meshes: Array<Mesh> = [];
   lights: Array<Light> = [];
-  inited: boolean;
+  inited: boolean = false;
 
   constructor() {
-    this.inited = false;
+    this.idx = i++;
   }
 
   addMesh(mesh: Mesh) {

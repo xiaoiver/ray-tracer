@@ -1,6 +1,7 @@
 import 'reflect-metadata';
-import { Container } from 'inversify';
+import { decorate, injectable, interfaces, Container } from 'inversify';
 import SERVICE_IDENTIFIER from './constants/services';
+import { EventEmitter } from 'eventemitter3';
 
 import Scene, { ISceneService } from './services/Scene';
 import Camera, { ICameraService } from './services/Camera';
@@ -10,11 +11,14 @@ import Renderer, { IRendererService } from './services/Renderer';
 import Controls, { IControlsService } from './services/Controls';
 
 const container = new Container();
-container.bind<ISceneService>(SERVICE_IDENTIFIER.ISceneService).to(Scene);
-container.bind<ICameraService>(SERVICE_IDENTIFIER.ICameraService).to(Camera);
-container.bind<ICanvasService>(SERVICE_IDENTIFIER.ICanvasService).to(Canvas);
-container.bind<IMouseService>(SERVICE_IDENTIFIER.IMouseService).to(Mouse);
-container.bind<IRendererService>(SERVICE_IDENTIFIER.IRendererService).to(Renderer);
-container.bind<IControlsService>(SERVICE_IDENTIFIER.IControlsService).to(Controls);
+
+container.bind<ISceneService>(SERVICE_IDENTIFIER.ISceneService).to(Scene).inSingletonScope();
+container.bind<ICameraService>(SERVICE_IDENTIFIER.ICameraService).to(Camera).inSingletonScope();
+container.bind<ICanvasService>(SERVICE_IDENTIFIER.ICanvasService).to(Canvas).inSingletonScope();
+container.bind<IMouseService>(SERVICE_IDENTIFIER.IMouseService).to(Mouse).inSingletonScope();
+container.bind<IRendererService>(SERVICE_IDENTIFIER.IRendererService).to(Renderer).inSingletonScope();
+container.bind<IControlsService>(SERVICE_IDENTIFIER.IControlsService).to(Controls).inSingletonScope();
+
+decorate(injectable(), EventEmitter);
 
 export { container };

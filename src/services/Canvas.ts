@@ -19,6 +19,8 @@ export default class Canvas extends EventEmitter implements ICanvasService {
 
     this.onResize = this.onResize.bind(this);
     window.addEventListener('resize', this.onResize, false);
+
+    this.resize();
   }
   
   getSize(): { width: number, height: number } {

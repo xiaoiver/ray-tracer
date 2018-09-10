@@ -10,22 +10,28 @@ import Shader from '../shaders/Shader';
 
 export interface IRendererService {
   render(): void;
-  setDisplayShader(displayShader: Shader): void;
-  setShadowShader(shadowShader: Shader): void;
+  addShader(shader: Shader): void;
+  updateShaders(): void;
+  updateScene(): void;
 }
 
 let gl: WebGLRenderingContext;
 
 @injectable()
 export default class Renderer implements IRendererService {
-  @inject(SERVICE_IDENTIFIER.ICanvasService) private canvas: ICanvasService;
-  @inject(SERVICE_IDENTIFIER.ISceneService) private scene: ISceneService;
+  private canvas: ICanvasService;
+  private scene: ISceneService;
 
+  private shaders: Array<Shader> = [];
   private clearColor: Vector = $V([0,0,0]);
-  private displayShader: Shader;
-  private shadowShader: Shader;
 
-  constructor() {
+  constructor(
+    @inject(SERVICE_IDENTIFIER.ICanvasService) _canvas: ICanvasService,
+    @inject(SERVICE_IDENTIFIER.ISceneService) _scene: ISceneService
+  ) {
+    this.canvas = _canvas;
+    this.scene = _scene;
+
     gl = <WebGLRenderingContext> getWebGLContext(this.canvas.el);
     if (!gl) {
       console.log('Failed to get the rendering context for WebGL.');
@@ -36,25 +42,33 @@ export default class Renderer implements IRendererService {
     // gl.enable(gl.CULL_FACE);
   }
 
-  setDisplayShader(displayShader: Shader) {
-    this.displayShader = displayShader;
+  addShader(shader: Shader) {
+    this.shaders.push(shader);
   }
 
-  setShadowShader(shadowShader: Shader) {
-    this.shadowShader = shadowShader;
+  updateShaders() {
+    this.shaders.forEach(shader => {
+      shader.inited = false;
+    });
+  }
+
+  updateScene() {
+    this.scene.inited = false;
   }
 
   render() {
-    if (!this.displayShader.inited) {
-      this.shadowShader.init(gl);
-      this.displayShader.init(gl);
-    }
+    this.shaders.forEach(shader => {
+      if (!shader.inited) {
+        shader.init(gl);
+      }
+    });
 
     if (!this.scene.inited) {
       this.scene.init();
     }
 
-    this.shadowShader.draw();
-    this.displayShader.draw();
+    this.shaders.forEach(shader => {
+      shader.draw();
+    });
   }
 }

@@ -17,14 +17,25 @@ export interface IShader {
   setUniforms(uniforms: any): void;
 }
 
+@injectable()
 export default abstract class Shader implements IShader {
-  @inject(SERVICE_IDENTIFIER.ICanvasService) canvas: ICanvasService;
-  @inject(SERVICE_IDENTIFIER.ISceneService) scene: ISceneService;
-  @inject(SERVICE_IDENTIFIER.ICameraService) camera: ICameraService;
+  canvas: ICanvasService;
+  scene: ISceneService;
+  camera: ICameraService;
 
-  inited: boolean;
+  inited: boolean = false;
   gl: WebGLRenderingContext;
   program: WebGLProgram;
+
+  constructor(
+    @inject(SERVICE_IDENTIFIER.ICanvasService) _canvas: ICanvasService,
+    @inject(SERVICE_IDENTIFIER.ISceneService) _scene: ISceneService,
+    @inject(SERVICE_IDENTIFIER.ICameraService) _camera: ICameraService
+  ) {
+    this.canvas = _canvas;
+    this.scene = _scene;
+    this.camera = _camera;
+  }
 
   protected abstract generateShaders(): {
     vertexShader: string;
@@ -32,10 +43,6 @@ export default abstract class Shader implements IShader {
   };
 
   public abstract draw(): void;
-
-  constructor() {
-    this.inited = false;
-  }
 
   init(gl: WebGLRenderingContext) {
     this.gl = gl;
@@ -125,8 +132,11 @@ export default abstract class Shader implements IShader {
     }
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   
     // Create a renderbuffer object and Set its size and parameters
     depthBuffer = gl.createRenderbuffer(); // Create a renderbuffer object

@@ -5,10 +5,12 @@ import { injectable, inject } from 'inversify';
 import SERVICE_IDENTIFIER from '../constants/services';
 import { ISceneService } from '../services/Scene';
 import { ICameraService } from '../services/Camera';
+import { IRendererService } from '../services/Renderer';
 import Mouse, { IMouseService, MouseData } from '../services/Mouse';
 import Canvas, { ICanvasService } from '../services/Canvas';
 
 import SpotLight from '../light/SpotLight';
+import ShadowLight, { ShadowMode } from '../light/ShadowLight';
 
 interface ILightControl {
   spotLight: {
@@ -22,20 +24,48 @@ interface ICameraControl {
   moveSpeed: number;
 }
 
-export interface IControlsService {}
+interface IShadowControl {
+  mode: {
+    [ShadowMode.Simple]: boolean,
+    [ShadowMode.HighPrecision]: boolean,
+    [ShadowMode.Lerp]: boolean,
+    [ShadowMode.PCF]: boolean,
+    [ShadowMode.PCFLerp]: boolean
+  }
+}
+
+export interface IControlsService {
+  cameraController: ICameraControl;
+  lightController: ILightControl;
+  shadowController: IShadowControl;
+}
 
 @injectable()
 export default class Controls extends EventEmitter implements IControlsService {
-  @inject(SERVICE_IDENTIFIER.ISceneService) private scene: ISceneService;
-  @inject(SERVICE_IDENTIFIER.ICameraService) private camera: ICameraService;
-  @inject(SERVICE_IDENTIFIER.IMouseService) private mouse: IMouseService;
-  @inject(SERVICE_IDENTIFIER.ICanvasService) private canvas: ICanvasService;
+  private scene: ISceneService;
+  private camera: ICameraService;
+  private mouse: IMouseService;
+  private canvas: ICanvasService;
+  private renderer: IRendererService;
 
   cameraController: ICameraControl;
   lightController: ILightControl;
+  shadowController: IShadowControl;
 
-  constructor() {
+  constructor(
+    @inject(SERVICE_IDENTIFIER.ICameraService) _camera: ICameraService,
+    @inject(SERVICE_IDENTIFIER.IMouseService) _mouse: IMouseService,
+    @inject(SERVICE_IDENTIFIER.ICanvasService) _canvas: ICanvasService,
+    @inject(SERVICE_IDENTIFIER.ISceneService) _scene: ISceneService,
+    @inject(SERVICE_IDENTIFIER.IRendererService) _renderer: IRendererService
+  ) {
     super();
+
+    this.scene = _scene;
+    this.camera = _camera;
+    this.canvas = _canvas;
+    this.mouse = _mouse;
+    this.renderer = _renderer;
 
     this.cameraController = {
       isTruck: true,
@@ -49,17 +79,29 @@ export default class Controls extends EventEmitter implements IControlsService {
       }
     };
 
+    this.shadowController = {
+      mode: {
+        [ShadowMode.Simple]: false,
+        [ShadowMode.HighPrecision]: true,
+        [ShadowMode.Lerp]: false,
+        [ShadowMode.PCF]: false,
+        [ShadowMode.PCFLerp]: false
+      }
+    }
+
     const gui = new dat.GUI();
     const cameraFolder = gui.addFolder('camera');
     cameraFolder.add(this.cameraController, 'isTruck');
     cameraFolder.add(this.cameraController, 'moveSpeed', 0.1, 2);
 
-    // this.initLightControl
-
     const lightFolder = gui.addFolder('light');
     lightFolder.add(this.lightController.spotLight, 'angle', 10, 30).onChange(this.changeLight.bind(this));
     lightFolder.add(this.lightController.spotLight, 'blur', 2, 10).onChange(this.changeLight.bind(this));
-    gui.open();
+
+    const shadowFolder = gui.addFolder('shadow');
+    Object.keys(this.shadowController.mode).forEach(m => {
+      shadowFolder.add(this.shadowController.mode, m).listen().onChange(this.changeShadowMode.bind(this, m));
+    });
 
     this.onResize = this.onResize.bind(this);
     this.onMousemove = this.onMousemove.bind(this);
@@ -101,10 +143,30 @@ export default class Controls extends EventEmitter implements IControlsService {
   }
 
   changeLight() {
-    let spotLight = <SpotLight> this.scene.lights[this.scene.lights.length - 1];
-    spotLight.angle = this.lightController.spotLight.angle;
-    spotLight.blur = this.lightController.spotLight.blur;
+    this.scene.lights.forEach(light => {
+      if (light instanceof SpotLight) {
+        light.angle = this.lightController.spotLight.angle;
+        light.blur = this.lightController.spotLight.blur;
+      }
+    });
 
-    this.emit('shader:refresh');
+    this.renderer.updateShaders();
+  }
+
+  changeShadowMode(mode: ShadowMode, value: boolean) {
+    if (value) {
+      Object.keys(this.shadowController.mode).forEach(m => {
+        (<any> this.shadowController.mode)[m] = false;
+      });
+      this.shadowController.mode[mode] = true;
+
+      this.scene.lights.forEach(light => {
+        if (light instanceof ShadowLight) {
+          light.mode = mode;
+        }
+      });
+
+      this.renderer.updateShaders();
+    }
   }
 }

@@ -45,8 +45,6 @@ export default class Camera implements ICameraService {
   view: Matrix;
   transform: Matrix= Matrix.I(4);
 
-  constructor() {}
-
   init(eye: Vector, fovy: number, aspect: number, znear: number, zfar: number) {
     this.eye = eye;
     this.center = $V([0, 0, 0]);
