@@ -40,7 +40,7 @@ const controls = container.get<IControlsService>(SERVICE_IDENTIFIER.IControlsSer
 
 // Setup camera
 const { width, height } = canvas.getSize();
-camera.init($V([0, 7.0, 9]), 45, width / height, 1, 100);
+camera.init($V([0, 7.0, 9]), 45, width / height, .01, 100);
 
 // Setup meshes & lights in current scene
 scene.addMesh(new Mesh({
@@ -76,41 +76,43 @@ scene.addMesh(new Mesh({
   })
 }));
 
-scene.addLight(new PointLight({
-  color: $V([1, 1, 1]),
-  position: $V([-5, 5, -5]),
-  model: new LightModel({
-    attenuation: {
-      linear: 0.1,
-      quadratic: 0.01
-    }
-  })
-}));
-// scene.addLight(new DirectionalLight({
-//   color: $V([0.5, 0.5, 0.5]),
-//   direction: $V([-1, -1, -1]),
+// scene.addLight(new PointLight({
+//   color: $V([1, 1, 1]),
+//   position: $V([-5, 5, -5]),
 //   model: new LightModel({
 //     ambient: $V([0.05, 0.05, 0.05]),
 //     diffuse: $V([0.4, 0.4, 0.4]),
-//     specular: $V([0.5, 0.5, 0.5])
+//     specular: $V([0.5, 0.5, 0.5]),
+//     attenuation: {
+//       linear: 0.1,
+//       quadratic: 0.01
+//     }
 //   })
 // }));
-scene.addLight(new SpotLight({
-  color: $V([.8, .8, .8]),
-  position: $V([5, 5, 0]),
-  direction: $V([-1, -1, 0]),
-  angle: 14,
-  exponent: 40,
+scene.addLight(new DirectionalLight({
+  direction: $V([0, -1, 0]),
   model: new LightModel({
-    ambient: $V([0, 0, 0]),
-    diffuse: $V([1, 1, 1]),
-    specular: $V([1, 1, 1]),
-    attenuation: {
-      linear: 0.1,
-      quadratic: 0.01
-    }
+    ambient: $V([0.2, 0.2, 0.2]),
+    diffuse: $V([0.4, 0.4, 0.4]),
+    specular: $V([0.5, 0.5, 0.5])
   })
 }));
+// scene.addLight(new SpotLight({
+//   color: $V([.8, .8, .8]),
+//   position: $V([5, 5, 0]),
+//   direction: $V([-1, -1, 0]),
+//   angle: 14,
+//   exponent: 40,
+//   model: new LightModel({
+//     ambient: $V([0, 0, 0]),
+//     diffuse: $V([1, 1, 1]),
+//     specular: $V([1, 1, 1]),
+//     attenuation: {
+//       linear: 0.1,
+//       quadratic: 0.01
+//     }
+//   })
+// }));
 // scene.addLight(new SpotLight({
 //   // color: $V([.8, .8, .8]),
 //   position: $V([-15, 15, 0]),

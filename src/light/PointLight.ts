@@ -29,15 +29,13 @@ export default class PointLight extends ShadowLight {
       // specular shading
       vec3 reflectDir = reflect(-lightDir, normal);
       float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_Shininess);
-      // attenuation
-      float distance = length(light.position - fragPos);
-      float attenuation = 1.0 / (light.constant + light.linear * distance + 
-              light.quadratic * (distance * distance));    
+
+      float att = attenuation(light.position - fragPos, light.constant, light.linear, light.quadratic);
 
       vec3 ambient = light.ambient * u_Diffuse;
       vec3 diffuse = light.diffuse * diff * u_Diffuse;
       vec3 specular = light.specular * spec * u_Specular;
-      return attenuation * (ambient + diffuse + specular);
+      return att * (ambient + diffuse + specular);
     }
   `;
 

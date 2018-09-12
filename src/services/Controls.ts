@@ -143,11 +143,15 @@ export default class Controls extends EventEmitter implements IControlsService {
   }
 
   changeLight() {
-    this.scene.lights.forEach(light => {
-      if (light instanceof SpotLight) {
-        light.angle = this.lightController.spotLight.angle;
-        light.blur = this.lightController.spotLight.blur;
-      }
+    const lightsInfo = this.scene.getLightsInfo();
+    Object.keys(lightsInfo).forEach(type => {
+      const {lights, varName} = lightsInfo[type];
+      lights.forEach((light, i) => {
+        if (light instanceof SpotLight) {
+          light.angle = this.lightController.spotLight.angle;
+          light.blur = this.lightController.spotLight.blur;
+        }
+      });
     });
 
     this.renderer.updateShaders();
@@ -155,15 +159,20 @@ export default class Controls extends EventEmitter implements IControlsService {
 
   changeShadowMode(mode: ShadowMode, value: boolean) {
     if (value) {
+      debugger
       Object.keys(this.shadowController.mode).forEach(m => {
         (<any> this.shadowController.mode)[m] = false;
       });
       this.shadowController.mode[mode] = true;
 
-      this.scene.lights.forEach(light => {
-        if (light instanceof ShadowLight) {
-          light.mode = mode;
-        }
+      const lightsInfo = this.scene.getLightsInfo();
+      Object.keys(lightsInfo).forEach(type => {
+        const {lights, varName} = lightsInfo[type];
+        lights.forEach((light, i) => {
+          if (light instanceof ShadowLight) {
+            light.mode = mode;
+          }
+        });
       });
 
       this.renderer.updateShaders();

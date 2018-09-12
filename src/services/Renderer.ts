@@ -39,7 +39,7 @@ export default class Renderer implements IRendererService {
     }
     gl.clearColor(this.clearColor.e(1), this.clearColor.e(2), this.clearColor.e(3), 1.0);
     gl.enable(gl.DEPTH_TEST);
-    // gl.enable(gl.CULL_FACE);
+    gl.enable(gl.CULL_FACE);
   }
 
   addShader(shader: Shader) {

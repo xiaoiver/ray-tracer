@@ -8,6 +8,7 @@ import { ICameraService } from '../services/Camera';
 import { ICanvasService } from '../services/Canvas';
 import { ISceneService } from '../services/Scene';
 import { IControlsService } from '../services/Controls';
+import DirectionalLight from '../light/DirectionalLight';
 
 const OFFSCREEN_WIDTH = 2048;
 const OFFSCREEN_HEIGHT = 2048;
@@ -147,9 +148,11 @@ export default class ShadowShader extends Shader {
     const gl = this.gl;
     gl.useProgram(this.program);
     
+    let projectionMatrix: Matrix;
     let viewMatrix: Matrix;
     let textureName: string;
-    const projectionMatrix = this.camera.perspective(this.camera.fovy, OFFSCREEN_WIDTH/OFFSCREEN_HEIGHT, this.camera.znear, this.camera.zfar);
+    let lightPosition: Vector;
+    
     const lightsInfo = this.scene.getLightsInfo();
     Object.keys(lightsInfo).forEach(type => {
       const {lights, varName} = lightsInfo[type];
@@ -161,12 +164,21 @@ export default class ShadowShader extends Shader {
           gl.bindFramebuffer(gl.FRAMEBUFFER, light.fbo.framebuffer);
           gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
           gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+          // gl.cullFace(gl.FRONT);
 
           // Set a texture object to the texture unit
           gl.activeTexture((<any>gl)[textureName]);
           gl.bindTexture(gl.TEXTURE_2D, light.fbo.texture);
           
-          viewMatrix = this.camera.lookAt(light.position, this.camera.center, this.camera.up);
+          if (light instanceof DirectionalLight) {
+            lightPosition = light.direction.x(-10);
+            projectionMatrix = this.camera.ortho(-10, 10, -10, 10, this.camera.znear, this.camera.zfar);
+          } else {
+            lightPosition = light.position;
+            projectionMatrix = this.camera.perspective(this.camera.fovy, OFFSCREEN_WIDTH/OFFSCREEN_HEIGHT, this.camera.znear, this.camera.zfar);
+          }
+
+          viewMatrix = this.camera.lookAt(lightPosition, this.camera.center, this.camera.up);
 
           this.scene.meshes.forEach(mesh => {
             const {vertices, modelMatrix} = mesh.geometry;

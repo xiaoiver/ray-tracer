@@ -23,21 +23,10 @@ export default class DisplayShader extends Shader {
     super(canvas, scene, camera);
   }
 
-  generateLightsInFragment() {
-    const lightsInfo = this.scene.getLightsInfo();
-
-    return Object.keys(lightsInfo).map(type => {
-      const {lights, varName, declaration} = lightsInfo[type];
-      return `
-        ${declaration}
-        uniform ${type} ${varName}s[${lights.length}];
-      `;
-    }).join('');
-  }
-
   generateShaders() {
     let vertexShadowDeclarations = '';
     let vertexShadowCalculations = '';
+    let fragmentDisplayDeclarations = '';
     let fragmentDisplayCalculations = '';
     let fragmentShadowDeclarations = '';
     let fragmentShadowCalculations = '';
@@ -45,10 +34,11 @@ export default class DisplayShader extends Shader {
 
     const lightsInfo = this.scene.getLightsInfo();
     Object.keys(lightsInfo).forEach(type => {
-      const {lights, varName} = lightsInfo[type];
+      const {lights, varName, declaration} = lightsInfo[type];
       // Calculate shadow map for every light
       lights.forEach((light, i) => {
         if (light instanceof ShadowLight) {
+          light.calculateShadow();
           vertexShadowDeclarations += light.shadowSnippet.vertex.declaration;
           vertexShadowCalculations += light.shadowSnippet.vertex.calculation;
           fragmentShadowDeclarations += light.shadowSnippet.fragment.declaration;
@@ -57,6 +47,10 @@ export default class DisplayShader extends Shader {
         }
       });
 
+      fragmentDisplayDeclarations += `
+        ${declaration}
+        uniform ${type} ${varName}s[${lights.length}];
+      `;
       // Calculate lights
       fragmentDisplayCalculations += `
         for(int i = 0; i < ${lights.length}; i++) {
@@ -98,14 +92,14 @@ export default class DisplayShader extends Shader {
       varying vec3 v_Normal;
       varying vec3 v_Position;
       varying vec4 v_Color;
-      ${this.generateLightsInFragment()}
-      ${fragmentShadowDeclarations}
 
       float attenuation(vec3 dir, float constant, float linear, float quadratic){
         float distance = length(dir);
         float radiance = 1.0 / (constant + distance * linear + pow(distance, 2.0) * quadratic);
         return clamp(radiance, 0.0, 1.0);
       }
+      ${fragmentDisplayDeclarations}
+      ${fragmentShadowDeclarations}
 
       ${ShadowShader.functions}
 
@@ -138,6 +132,7 @@ export default class DisplayShader extends Shader {
     gl.viewport(0, 0, width, height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(this.program);
+    // gl.cullFace(gl.BACK);
 
     // Setup camera uniforms
     this.setUniforms({

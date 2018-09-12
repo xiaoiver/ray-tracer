@@ -17,6 +17,7 @@ export interface ICameraService {
   init(eye: Vector, fovy: number, aspect: number, znear: number, zfar: number): void;
   perspective(fovy: number, aspect: number, znear: number, zfar: number): Matrix;
   lookAt(eye: Vector, center: Vector, up: Vector): Matrix;
+  ortho(left: number, right: number, bottom: number, top: number, znear: number, zfar: number): Matrix;
 
   /**
    * http://learnwebgl.brown37.net/07_cameras/camera_linear_motion.html
@@ -99,6 +100,17 @@ export default class Camera implements ICameraService {
     const t = Matrix.Translation($V([-eye.e(1), -eye.e(2), -eye.e(3)]));
 
     return m.x(t);
+  }
+
+  ortho(left: number, right: number, bottom: number, top: number, znear: number, zfar: number) {
+    const tx = - (right + left) / (right - left);
+    const ty = - (top + bottom) / (top - bottom);
+    const tz = - (zfar + znear) / (zfar - znear);
+
+    return $M([[2 / (right - left), 0, 0, tx],
+          [0, 2 / (top - bottom), 0, ty],
+          [0, 0, -2 / (zfar - znear), tz],
+          [0, 0, 0, 1]]);
   }
 
   /**

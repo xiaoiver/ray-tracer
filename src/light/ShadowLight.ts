@@ -22,7 +22,9 @@ export default class ShadowLight extends Light {
   constructor(options: Partial<LightOptions>) {
     super(options);
     Object.assign(this, options);
+  }
 
+  calculateShadow() {
     const i = this.index;
     let fragmentCode;
 
@@ -36,7 +38,17 @@ export default class ShadowLight extends Light {
     } else if (this.mode === ShadowMode.HighPrecision) {
       fragmentCode = `
         vec3 shadowCoord${i} = (v_PositionFromLight${i}.xyz/v_PositionFromLight${i}.w) * 0.5 + 0.5;
-        float visibility${i} = texture2DCompare(${this.uShadowMap}, shadowCoord${i}.xy, shadowCoord${i}.z);
+        bvec4 inFrustumVec = bvec4 ( shadowCoord${i}.x >= 0.0, shadowCoord${i}.x <= 1.0, shadowCoord${i}.y >= 0.0, shadowCoord${i}.y <= 1.0 );
+        bool inFrustum = all( inFrustumVec );
+    
+        bvec2 frustumTestVec = bvec2( inFrustum, shadowCoord${i}.z <= 1.0 );
+    
+        bool frustumTest = all( frustumTestVec );
+
+        float visibility${i} = 1.0;
+        if ( frustumTest ) {
+          visibility${i} = texture2DCompare(${this.uShadowMap}, shadowCoord${i}.xy, shadowCoord${i}.z);
+        }
       `;
     } else if (this.mode === ShadowMode.Lerp) {
       fragmentCode = `
