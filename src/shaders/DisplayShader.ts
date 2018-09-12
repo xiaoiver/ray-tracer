@@ -1,12 +1,14 @@
 import { injectable, inject } from 'inversify';
 import { Matrix, Vector } from 'sylvester';
-import Shader from './Shader';
 import SERVICE_IDENTIFIER from '../constants/services';
 import { IShaderSnippet } from './ShaderSnippet';
 import { ICameraService } from '../services/Camera';
 import { ICanvasService } from '../services/Canvas';
 import { ISceneService } from '../services/Scene';
+import Shader from './Shader';
 import ShadowShader from './ShadowShader';
+import PointLight from '../light/PointLight';
+import ShadowLight from '../light/ShadowLight';
 
 @injectable()
 export default class DisplayShader extends Shader {
@@ -21,16 +23,49 @@ export default class DisplayShader extends Shader {
     super(canvas, scene, camera);
   }
 
+  generateLightsInFragment() {
+    const lightsInfo = this.scene.getLightsInfo();
+
+    return Object.keys(lightsInfo).map(type => {
+      const {lights, varName, declaration} = lightsInfo[type];
+      return `
+        ${declaration}
+        uniform ${type} ${varName}s[${lights.length}];
+      `;
+    }).join('');
+  }
+
   generateShaders() {
-    this.lightSnippets = [];
-    this.shadowSnippets = [];
-    this.scene.lights.forEach(light => {
-      light.generateSnippets();
-      this.lightSnippets.push(light.lightSnippet);
-      this.shadowSnippets.push(light.shadowSnippet);
+    let vertexShadowDeclarations = '';
+    let vertexShadowCalculations = '';
+    let fragmentDisplayCalculations = '';
+    let fragmentShadowDeclarations = '';
+    let fragmentShadowCalculations = '';
+    let fragmentShadowResults = '1.0';
+
+    const lightsInfo = this.scene.getLightsInfo();
+    Object.keys(lightsInfo).forEach(type => {
+      const {lights, varName} = lightsInfo[type];
+      // Calculate shadow map for every light
+      lights.forEach((light, i) => {
+        if (light instanceof ShadowLight) {
+          vertexShadowDeclarations += light.shadowSnippet.vertex.declaration;
+          vertexShadowCalculations += light.shadowSnippet.vertex.calculation;
+          fragmentShadowDeclarations += light.shadowSnippet.fragment.declaration;
+          fragmentShadowCalculations += light.shadowSnippet.fragment.calculation;
+          fragmentShadowResults += '*' + light.shadowSnippet.fragment.result;
+        }
+      });
+
+      // Calculate lights
+      fragmentDisplayCalculations += `
+        for(int i = 0; i < ${lights.length}; i++) {
+          result += calc${type}(${varName}s[i], normal, v_Position, viewDir);
+        }
+      `;
     });
 
-    let vertexShader = `
+    const vertexShader = `
       attribute vec4 a_Position;
       attribute vec4 a_Color;
       attribute vec4 a_Normal;
@@ -42,9 +77,9 @@ export default class DisplayShader extends Shader {
       varying vec3 v_Normal;
       varying vec3 v_Position;
       
-      ${this.shadowSnippets.map(s => s.vertex.declaration).join('')}
+      ${vertexShadowDeclarations}
       void main() {
-        ${this.shadowSnippets.map(s => s.vertex.calculation).join('')}
+        ${vertexShadowCalculations}
         v_Position = vec3(u_ModelMatrix * a_Position);
         v_Normal = vec3(u_NormalMatrix * a_Normal);
         v_Color = a_Color;
@@ -52,17 +87,19 @@ export default class DisplayShader extends Shader {
       }
     `;
 
-    const shadowEffect = this.shadowSnippets.filter(s => !!s.fragment.result).map(s => s.fragment.result).join('*') || '1.0';
-
-    let fragmentShader = `
+    const fragmentShader = `
       precision mediump float;
       #define PI 3.141592653589793
       uniform vec3 u_CameraPosition;
+      uniform float u_Diffuse;
+      uniform float u_Specular;
+      uniform float u_Shininess;
+
       varying vec3 v_Normal;
       varying vec3 v_Position;
       varying vec4 v_Color;
-      ${this.shadowSnippets.map(s => s.fragment.declaration).join('')}
-      ${this.lightSnippets.map(s => s.fragment.declaration).join('')}
+      ${this.generateLightsInFragment()}
+      ${fragmentShadowDeclarations}
 
       float attenuation(vec3 dir, float constant, float linear, float quadratic){
         float distance = length(dir);
@@ -74,11 +111,17 @@ export default class DisplayShader extends Shader {
 
       void main() {
         vec3 normal = normalize(v_Normal);
-        ${this.shadowSnippets.map(s => s.fragment.calculation).join('')}
-        ${this.lightSnippets.map(s => s.fragment.calculation).join('')}
-        gl_FragColor = vec4(
-          (${shadowEffect}) *
-          (${this.lightSnippets.filter(s => !!s.fragment.result).map(s => s.fragment.result).join('+')}), v_Color.a);
+        vec3 viewDir = normalize(u_CameraPosition - v_Position);
+
+        // final lights result
+        vec3 result = vec3(0.0);
+
+        // calculate shadow effect
+        ${fragmentShadowCalculations}
+
+        // calculate lights
+        ${fragmentDisplayCalculations}
+        gl_FragColor = vec4((${fragmentShadowResults}) * result, v_Color.a);
       }
     `;
 
@@ -101,26 +144,34 @@ export default class DisplayShader extends Shader {
       'u_CameraPosition': this.camera.eye
     });
 
-    let vpMatrix = this.camera.transform;
-
     // Draw every mesh in current scene
     this.scene.meshes.forEach(mesh => {
-      let {vertices, colors, normals, modelMatrix} = mesh.geometry;
-      let mvpMatrix = vpMatrix.x(modelMatrix);
-      let normalMatrix = modelMatrix.inverse().transpose();
+      const {vertices, colors, normals, modelMatrix} = mesh.geometry;
+      const {diffuse, specular, shininess} = mesh.material;
+
+      const mvpMatrix = this.camera.transform.x(modelMatrix);
+      const normalMatrix = modelMatrix.inverse().transpose();
 
       // Setup uniforms relative to current model
       this.setUniforms({
         'u_MvpMatrix': mvpMatrix,
         'u_ModelMatrix': modelMatrix,
-        'u_NormalMatrix': normalMatrix
+        'u_NormalMatrix': normalMatrix,
+        'u_Diffuse': diffuse,
+        'u_Specular': specular,
+        'u_Shininess': shininess
       });
 
       // Setup lights
-      this.scene.lights.forEach(light => {
-        light.setUniforms(this);
-        this.setUniforms({
-          [`u_MvpMatrixFromLight${light.index}`]: mesh.mvpMatrixFromLight[light.index]
+      const lightsInfo = this.scene.getLightsInfo();
+      Object.keys(lightsInfo).forEach(type => {
+        const {lights, varName} = lightsInfo[type];
+        lights.forEach((light, i) => {
+          light.setUniforms(this, `${varName}s[${i}]`);
+
+          this.setUniforms({
+            [`u_MvpMatrixFromLight${light.index}`]: mesh.mvpMatrixFromLight[light.index]
+          });
         });
       });
 

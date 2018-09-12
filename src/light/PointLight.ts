@@ -6,46 +6,56 @@ import ShadowLight from './ShadowLight';
 interface PointLightOptions extends LightOptions {};
 
 export default class PointLight extends ShadowLight {
-  uColor: string;
-  uPosition: string;
-  vColor: string;
-  shadowEnabled: boolean = true;
+  type = 'PointLight';
 
-  constructor(options: PointLightOptions) {
-    super(options);
+  declaration = `
+    struct PointLight {
+      vec3 position;
+      
+      float constant;
+      float linear;
+      float quadratic;  
 
-    this.uColor = `${UNIFORM_POINT_LIGHT_COLOR}${this.index}`;
-    this.uPosition = `${UNIFORM_POINT_LIGHT_POSITION}${this.index}`;
-    this.vColor = `v_${UNIFORM_POINT_LIGHT_POSITION}${this.index}`;
-  }
-
-  generateSnippets() {
-    const i = this.index;
-    super.generateSnippets();
-    this.lightSnippet.fragment = {
-      declaration: `
-        uniform vec3 ${this.uColor};
-        uniform vec3 ${this.uPosition};
-      `,
-      calculation: `
-        vec3 lightDirection${i} = ${this.uPosition} - v_Position;
-        vec3 nLightDirection${i} = normalize(lightDirection${i});
-        float nDotL${i} = max(dot(nLightDirection${i}, normal), 0.0);
-        vec3 ${this.vColor} = ${this.uColor} * v_Color.rgb * nDotL${i}
-          * attenuation(lightDirection${i},
-            ${this.attenuation.constant.toFixed(5)},
-            ${this.attenuation.linear.toFixed(5)},
-            ${this.attenuation.quadratic.toFixed(5)});
-      `,
-      result: `${this.vColor}`
+      vec3 ambient;
+      vec3 diffuse;
+      vec3 specular;
     };
+
+    vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+    {
+      vec3 lightDir = normalize(light.position - fragPos);
+      // diffuse shading
+      float diff = max(dot(normal, lightDir), 0.0);
+      // specular shading
+      vec3 reflectDir = reflect(-lightDir, normal);
+      float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_Shininess);
+      // attenuation
+      float distance = length(light.position - fragPos);
+      float attenuation = 1.0 / (light.constant + light.linear * distance + 
+              light.quadratic * (distance * distance));    
+
+      vec3 ambient = light.ambient * u_Diffuse;
+      vec3 diffuse = light.diffuse * diff * u_Diffuse;
+      vec3 specular = light.specular * spec * u_Specular;
+      return attenuation * (ambient + diffuse + specular);
+    }
+  `;
+
+  constructor(options: Partial<PointLightOptions>) {
+    super(options);
+    Object.assign(this, options);
   }
 
-  setUniforms(shader: Shader) {
-    super.setUniforms(shader);
+  setUniforms(shader: Shader, namespace: string) {
+    super.setUniforms(shader, namespace);
     shader.setUniforms({
-      [this.uColor]: this.color,
-      [this.uPosition]: this.position
+      [`${namespace}.position`]: this.position,
+      [`${namespace}.ambient`]: this.model.ambient,
+      [`${namespace}.diffuse`]: this.model.diffuse,
+      [`${namespace}.specular`]: this.model.specular,
+      [`${namespace}.constant`]: this.model.attenuation.constant,
+      [`${namespace}.linear`]: this.model.attenuation.linear,
+      [`${namespace}.quadratic`]: this.model.attenuation.quadratic
     });
   }
 }

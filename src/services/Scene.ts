@@ -2,6 +2,14 @@ import { injectable, inject } from 'inversify';
 import { Light } from '../light/Light';
 import Mesh from '../Mesh';
 
+interface LightsInfo {
+  [type: string]: {
+    varName: string;
+    declaration: string;
+    lights: Array<Light>;
+  }
+}
+
 let i = 0;
 
 export interface ISceneService {
@@ -14,6 +22,8 @@ export interface ISceneService {
   addMesh(mesh: Mesh): void;
   addLight(light: Light): void;
   init(): void;
+
+  getLightsInfo(): LightsInfo;
 }
 
 @injectable()
@@ -22,6 +32,7 @@ export default class Scene implements ISceneService {
 
   meshes: Array<Mesh> = [];
   lights: Array<Light> = [];
+  private lightsInfo: LightsInfo = {};
   inited: boolean = false;
 
   constructor() {
@@ -33,7 +44,22 @@ export default class Scene implements ISceneService {
   }
 
   addLight(light: Light) {
-    this.lights.push(light);
+    if (!this.lightsInfo[light.type]) {
+      this.lightsInfo[light.type] = {
+        varName: light.type.charAt(0).toLowerCase() + light.type.substring(1),
+        declaration: light.declaration,
+        lights: []
+      };
+    }
+    this.lightsInfo[light.type].lights.push(light);
+  }
+
+  removeLight(light: Light) {
+
+  }
+
+  getLightsInfo(): LightsInfo {
+    return this.lightsInfo;
   }
 
   init() {

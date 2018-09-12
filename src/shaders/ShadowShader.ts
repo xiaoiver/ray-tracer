@@ -88,25 +88,29 @@ export default class ShadowShader extends Shader {
     let fbo: FBO;
     let fboTextureIdx: number = 0;
     let shadowMode;
-    
-    this.scene.lights.forEach(light => {
-      if (light instanceof ShadowLight) {
-        // Initialize framebuffer object (FBO)  
-        fbo = <FBO> this.initFramebufferObject(OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-        if (!fbo.framebuffer) {
-          console.log('Failed to initialize frame buffer object');
-          return;
-        }
-        light.fbo = fbo;
-        light.fboTextureIdx = fboTextureIdx++;
 
-        if (fboTextureIdx > 32) {
-          console.log('Exceed the maximum number of textures');
-          return;
+    const lightsInfo = this.scene.getLightsInfo();
+    Object.keys(lightsInfo).forEach(type => {
+      const {lights, varName} = lightsInfo[type];
+      lights.forEach((light, i) => {
+        if (light instanceof ShadowLight) {
+          // Initialize framebuffer object (FBO)  
+          fbo = <FBO> this.initFramebufferObject(OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+          if (!fbo.framebuffer) {
+            console.log('Failed to initialize frame buffer object');
+            return;
+          }
+          light.fbo = fbo;
+          light.fboTextureIdx = fboTextureIdx++;
+  
+          if (fboTextureIdx > 32) {
+            console.log('Exceed the maximum number of textures');
+            return;
+          }
+  
+          shadowMode = light.mode;
         }
-
-        shadowMode = light.mode;
-      }
+      });
     });
 
     let fragmentShader;
@@ -146,39 +150,43 @@ export default class ShadowShader extends Shader {
     let viewMatrix: Matrix;
     let textureName: string;
     const projectionMatrix = this.camera.perspective(this.camera.fovy, OFFSCREEN_WIDTH/OFFSCREEN_HEIGHT, this.camera.znear, this.camera.zfar);
-    this.scene.lights.forEach(light => {
+    const lightsInfo = this.scene.getLightsInfo();
+    Object.keys(lightsInfo).forEach(type => {
+      const {lights, varName} = lightsInfo[type];
       // Calculate shadow map for every light
-      if (light instanceof ShadowLight) {
-        // Change the drawing destination to FBO
-        textureName = `TEXTURE${light.fboTextureIdx}`;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, light.fbo.framebuffer);
-        gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      lights.forEach((light, i) => {
+        if (light instanceof ShadowLight) {
+          // Change the drawing destination to FBO
+          textureName = `TEXTURE${light.fboTextureIdx}`;
+          gl.bindFramebuffer(gl.FRAMEBUFFER, light.fbo.framebuffer);
+          gl.viewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        // Set a texture object to the texture unit
-        gl.activeTexture((<any>gl)[textureName]);
-        gl.bindTexture(gl.TEXTURE_2D, light.fbo.texture);
-        
-        viewMatrix = this.camera.lookAt(light.position, this.camera.center, this.camera.up);
+          // Set a texture object to the texture unit
+          gl.activeTexture((<any>gl)[textureName]);
+          gl.bindTexture(gl.TEXTURE_2D, light.fbo.texture);
+          
+          viewMatrix = this.camera.lookAt(light.position, this.camera.center, this.camera.up);
 
-        this.scene.meshes.forEach(mesh => {
-          const {vertices, modelMatrix} = mesh.geometry;
-          const mvpMatrixFromLight = projectionMatrix.x(viewMatrix.x(modelMatrix));
+          this.scene.meshes.forEach(mesh => {
+            const {vertices, modelMatrix} = mesh.geometry;
+            const mvpMatrixFromLight = projectionMatrix.x(viewMatrix.x(modelMatrix));
 
-          // Save this mvpmatrix in current mesh for later use in display shader
-          mesh.mvpMatrixFromLight[`${light.index}`] = mvpMatrixFromLight;
-    
-          this.setUniforms({
-            'u_MvpMatrix': mvpMatrixFromLight
+            // Save this mvpmatrix in current mesh for later use in display shader
+            mesh.mvpMatrixFromLight[`${light.index}`] = mvpMatrixFromLight;
+      
+            this.setUniforms({
+              'u_MvpMatrix': mvpMatrixFromLight
+            });
+      
+            if (!this.setVertexAttribute('a_Position', vertices, 3, gl.FLOAT)) return -1;
+      
+            mesh.geometry.draw(gl);
           });
-    
-          if (!this.setVertexAttribute('a_Position', vertices, 3, gl.FLOAT)) return -1;
-    
-          mesh.geometry.draw(gl);
-        });
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      }
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        }
+      });
     });
   }
 }

@@ -15,11 +15,12 @@ import Sphere from './geometry/Sphere';
 import Cube from './geometry/Cube';
 import Plane from './geometry/Plane';
 import Triangle from './geometry/Triangle';
-import AmbientLight from './light/AmbientLight';
+import DirectionalLight from './light/DirectionalLight';
 import PointLight from './light/PointLight';
 import SpotLight from './light/SpotLight';
 import DisplayShader from './shaders/DisplayShader';
 import ShadowShader from './shaders/ShadowShader';
+import LightModel from './light/models/LightModel';
 // import RayTracer from './shaders/RayTracer';
 
 // setup stats
@@ -75,39 +76,54 @@ scene.addMesh(new Mesh({
   })
 }));
 
-scene.addLight(new AmbientLight({
-  color: $V([0.2, 0.2, 0.2])
+scene.addLight(new PointLight({
+  color: $V([1, 1, 1]),
+  position: $V([-5, 5, -5]),
+  model: new LightModel({
+    attenuation: {
+      linear: 0.1,
+      quadratic: 0.01
+    }
+  })
 }));
-// scene.addLight(new PointLight({
-//   color: $V([1, 1, 1]),
-//   position: $V([-5, 5, -5]),
-//   // attenuation: {
-//   //   linear: 0.1,
-//   //   quadratic: 0.01
-//   // }
+// scene.addLight(new DirectionalLight({
+//   color: $V([0.5, 0.5, 0.5]),
+//   direction: $V([-1, -1, -1]),
+//   model: new LightModel({
+//     ambient: $V([0.05, 0.05, 0.05]),
+//     diffuse: $V([0.4, 0.4, 0.4]),
+//     specular: $V([0.5, 0.5, 0.5])
+//   })
 // }));
 scene.addLight(new SpotLight({
   color: $V([.8, .8, .8]),
-  position: $V([15, 15, 0]),
+  position: $V([5, 5, 0]),
   direction: $V([-1, -1, 0]),
   angle: 14,
   exponent: 40,
-  attenuation: {
-    linear: 0.1,
-    quadratic: 0.01
-  }
+  model: new LightModel({
+    ambient: $V([0, 0, 0]),
+    diffuse: $V([1, 1, 1]),
+    specular: $V([1, 1, 1]),
+    attenuation: {
+      linear: 0.1,
+      quadratic: 0.01
+    }
+  })
 }));
-scene.addLight(new SpotLight({
-  color: $V([.8, .8, .8]),
-  position: $V([-15, 15, 0]),
-  direction: $V([1, -1, 0]),
-  angle: 14,
-  exponent: 40,
-  attenuation: {
-    linear: 0.1,
-    quadratic: 0.01
-  }
-}));
+// scene.addLight(new SpotLight({
+//   // color: $V([.8, .8, .8]),
+//   position: $V([-15, 15, 0]),
+//   direction: $V([1, -1, 0]),
+//   angle: 14,
+//   exponent: 40,
+//   model: {
+//     attenuation: {
+//       linear: 0.1,
+//       quadratic: 0.01
+//     }
+//   }
+// }));
 
 renderer.addShader(new ShadowShader(canvas, scene, camera));
 renderer.addShader(new DisplayShader(canvas, scene, camera));

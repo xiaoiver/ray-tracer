@@ -1,5 +1,7 @@
 import { Light, LightOptions } from './Light';
 import Shader, {FBO} from '../shaders/Shader';
+import { UNIFORM_SHADOW_LIGHT_MAP } from '../constants';
+import { IShaderSnippet } from '../shaders/ShaderSnippet';
 
 export enum ShadowMode {
   Simple = 'simple',
@@ -13,46 +15,43 @@ export default class ShadowLight extends Light {
   fbo: FBO;
   fboTextureIdx: number;
   mode: ShadowMode = ShadowMode.HighPrecision;
+  shadowSnippet: IShaderSnippet;
 
-  constructor(options: LightOptions) {
+  uShadowMap: string = `UNIFORM_SHADOW_LIGHT_MAP${this.index}`;
+
+  constructor(options: Partial<LightOptions>) {
     super(options);
+    Object.assign(this, options);
 
-    this.uniforms = {
-      ...this.uniforms,
-      uShadowMap: `u_ShadowMap${this.index}`
-    };
-  }
-
-  generateSnippets() {
     const i = this.index;
     let fragmentCode;
 
     if (this.mode === ShadowMode.Simple) {
       fragmentCode = `
         vec3 shadowCoord${i} = (v_PositionFromLight${i}.xyz/v_PositionFromLight${i}.w)/2.0 + 0.5;
-        vec4 rgbaDepth${i} = texture2D(${this.uniforms.uShadowMap}, shadowCoord${i}.xy);
+        vec4 rgbaDepth${i} = texture2D(${this.uShadowMap}, shadowCoord${i}.xy);
         float depth${i} = rgbaDepth${i}.r;
         float visibility${i} = (shadowCoord${i}.z > depth${i} + 0.005) ? 0.7 : 1.0;
       `;
     } else if (this.mode === ShadowMode.HighPrecision) {
       fragmentCode = `
         vec3 shadowCoord${i} = (v_PositionFromLight${i}.xyz/v_PositionFromLight${i}.w) * 0.5 + 0.5;
-        float visibility${i} = texture2DCompare(${this.uniforms.uShadowMap}, shadowCoord${i}.xy, shadowCoord${i}.z);
+        float visibility${i} = texture2DCompare(${this.uShadowMap}, shadowCoord${i}.xy, shadowCoord${i}.z);
       `;
     } else if (this.mode === ShadowMode.Lerp) {
       fragmentCode = `
         vec3 shadowCoord${i} = (v_PositionFromLight${i}.xyz/v_PositionFromLight${i}.w) * 0.5 + 0.5;
-        float visibility${i} = texture2DShadowLerp(${this.uniforms.uShadowMap}, shadowCoord${i}.xy, shadowCoord${i}.z);
+        float visibility${i} = texture2DShadowLerp(${this.uShadowMap}, shadowCoord${i}.xy, shadowCoord${i}.z);
       `;
     } else if (this.mode === ShadowMode.PCF) {
       fragmentCode = `
         vec3 shadowCoord${i} = (v_PositionFromLight${i}.xyz/v_PositionFromLight${i}.w) * 0.5 + 0.5;
-        float visibility${i} = PCF(${this.uniforms.uShadowMap}, shadowCoord${i}.xy, shadowCoord${i}.z);
+        float visibility${i} = PCF(${this.uShadowMap}, shadowCoord${i}.xy, shadowCoord${i}.z);
       `;
     } else if (this.mode === ShadowMode.PCFLerp) {
       fragmentCode = `
         vec3 shadowCoord${i} = (v_PositionFromLight${i}.xyz/v_PositionFromLight${i}.w) * 0.5 + 0.5;
-        float visibility${i} = PCFLerp(${this.uniforms.uShadowMap}, shadowCoord${i}.xy, shadowCoord${i}.z);
+        float visibility${i} = PCFLerp(${this.uShadowMap}, shadowCoord${i}.xy, shadowCoord${i}.z);
       `;
     }
 
@@ -69,7 +68,7 @@ export default class ShadowLight extends Light {
       },
       fragment: {
         declaration: `
-          uniform sampler2D ${this.uniforms.uShadowMap};
+          uniform sampler2D ${this.uShadowMap};
           varying vec4 v_PositionFromLight${i};
         `,
         calculation: fragmentCode,
@@ -78,9 +77,11 @@ export default class ShadowLight extends Light {
     };
   }
 
-  setUniforms(shader: Shader) {
-    shader.setUniforms({
-      [this.uniforms.uShadowMap]: this.fboTextureIdx
-    });
+  setUniforms(shader: Shader, namespace: string) {
+    const location = shader.gl.getUniformLocation(shader.program, this.uShadowMap);
+    shader.gl.uniform1i(location, this.fboTextureIdx);
+    // shader.setUniforms({
+    //   [this.uniforms.uShadowMap]: this.fboTextureIdx
+    // });
   }
 }

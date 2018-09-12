@@ -89,14 +89,15 @@ export default abstract class Shader implements IShader {
     const gl = this.gl;
     for (let name in uniforms) {
       const value = uniforms[name];
+      // console.log('[set uniform]', name, value);
       const location = gl.getUniformLocation(this.program, name);
       if (location == null) continue;
       if (value instanceof Vector) {
         gl.uniform3fv(location, new Float32Array([value.elements[0], value.elements[1], value.elements[2]]));
       } else if (value instanceof Matrix) {
         gl.uniformMatrix4fv(location, false, new Float32Array(value.flatten()));
-      } else if (value % 1 === 0) { // https://stackoverflow.com/questions/3885817/how-do-i-check-that-a-number-is-float-or-integer
-        gl.uniform1i(location, value);
+      // } else if (value % 1 === 0) { // https://stackoverflow.com/questions/3885817/how-do-i-check-that-a-number-is-float-or-integer
+      //   gl.uniform1i(location, value);
       } else {
         gl.uniform1f(location, value);
       }
