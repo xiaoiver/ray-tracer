@@ -23,20 +23,24 @@ export default class DirectionalLight extends ShadowLight {
     vec3 calcDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     {
       vec3 lightDir = normalize(-light.direction);
+
       // diffuse shading
       float diff = max(dot(normal, lightDir), 0.0);
-      // specular shading
-      vec3 reflectDir = reflect(-lightDir, normal);
-      float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_Shininess);
 
-      //vec3 halfwayDir = normalize(nLightDirection + nCameraDirection);
-      // Blinn-Phong
-      //specularEffect = pow(max(dot(normal, halfwayDir), 0.0), 120.0);
+      // specular shading
+      // vec3 reflectDir = reflect(-lightDir, normal);
+      // float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_Shininess);
+
+      // Blinn-Phong specular shading
+      vec3 halfwayDir = normalize(lightDir + viewDir);
+      float spec = pow(max(dot(normal, halfwayDir), 0.0), u_Shininess);
 
       vec3 ambient = light.ambient * u_Diffuse;
       vec3 diffuse = light.diffuse * diff * u_Diffuse;
       vec3 specular = light.specular * spec * u_Specular;
-      return ambient + diffuse + specular;
+
+      float shadow = calcShadow(u_ShadowMap${this.index}, v_PositionFromLight${this.index}, lightDir, normal);
+      return ambient + shadow * (diffuse + specular);
     }
   `;
 

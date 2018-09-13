@@ -30,7 +30,6 @@ export default class DisplayShader extends Shader {
     let fragmentDisplayCalculations = '';
     let fragmentShadowDeclarations = '';
     let fragmentShadowCalculations = '';
-    let fragmentShadowResults = '1.0';
 
     const lightsInfo = this.scene.getLightsInfo();
     Object.keys(lightsInfo).forEach(type => {
@@ -43,7 +42,6 @@ export default class DisplayShader extends Shader {
           vertexShadowCalculations += light.shadowSnippet.vertex.calculation;
           fragmentShadowDeclarations += light.shadowSnippet.fragment.declaration;
           fragmentShadowCalculations += light.shadowSnippet.fragment.calculation;
-          fragmentShadowResults += '*' + light.shadowSnippet.fragment.result;
         }
       });
 
@@ -98,24 +96,19 @@ export default class DisplayShader extends Shader {
         float radiance = 1.0 / (constant + distance * linear + pow(distance, 2.0) * quadratic);
         return clamp(radiance, 0.0, 1.0);
       }
-      ${fragmentDisplayDeclarations}
-      ${fragmentShadowDeclarations}
 
-      ${ShadowShader.functions}
+      ${ShadowShader.generateFunctionsInDisplayShader()}
+      ${fragmentShadowDeclarations}
+      ${fragmentDisplayDeclarations}
 
       void main() {
         vec3 normal = normalize(v_Normal);
         vec3 viewDir = normalize(u_CameraPosition - v_Position);
-
-        // final lights result
         vec3 result = vec3(0.0);
-
-        // calculate shadow effect
-        ${fragmentShadowCalculations}
 
         // calculate lights
         ${fragmentDisplayCalculations}
-        gl_FragColor = vec4((${fragmentShadowResults}) * result, v_Color.a);
+        gl_FragColor = vec4(result * v_Color.rgb, v_Color.a);
       }
     `;
 

@@ -10,7 +10,8 @@ import Mouse, { IMouseService, MouseData } from '../services/Mouse';
 import Canvas, { ICanvasService } from '../services/Canvas';
 
 import SpotLight from '../light/SpotLight';
-import ShadowLight, { ShadowMode } from '../light/ShadowLight';
+import ShadowLight from '../light/ShadowLight';
+import ShadowShader, { ShadowMode } from '../shaders/ShadowShader';
 
 interface ILightControl {
   spotLight: {
@@ -159,21 +160,14 @@ export default class Controls extends EventEmitter implements IControlsService {
 
   changeShadowMode(mode: ShadowMode, value: boolean) {
     if (value) {
-      debugger
+      // toggle dat.gui
       Object.keys(this.shadowController.mode).forEach(m => {
         (<any> this.shadowController.mode)[m] = false;
       });
       this.shadowController.mode[mode] = true;
 
-      const lightsInfo = this.scene.getLightsInfo();
-      Object.keys(lightsInfo).forEach(type => {
-        const {lights, varName} = lightsInfo[type];
-        lights.forEach((light, i) => {
-          if (light instanceof ShadowLight) {
-            light.mode = mode;
-          }
-        });
-      });
+      // switch shadow mode in shader
+      ShadowShader.mode = mode;
 
       this.renderer.updateShaders();
     }

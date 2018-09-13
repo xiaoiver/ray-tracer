@@ -14,7 +14,7 @@ export interface ICameraService {
   view: Matrix;
   transform: Matrix;
 
-  init(eye: Vector, fovy: number, aspect: number, znear: number, zfar: number): void;
+  init(eye: Vector, center: Vector, fovy: number, aspect: number, znear: number, zfar: number): void;
   perspective(fovy: number, aspect: number, znear: number, zfar: number): Matrix;
   lookAt(eye: Vector, center: Vector, up: Vector): Matrix;
   ortho(left: number, right: number, bottom: number, top: number, znear: number, zfar: number): Matrix;
@@ -46,9 +46,9 @@ export default class Camera implements ICameraService {
   view: Matrix;
   transform: Matrix= Matrix.I(4);
 
-  init(eye: Vector, fovy: number, aspect: number, znear: number, zfar: number) {
+  init(eye: Vector, center: Vector, fovy: number, aspect: number, znear: number, zfar: number) {
     this.eye = eye;
-    this.center = $V([0, 0, 0]);
+    this.center = center;
     this.up = $V([0, 1, 0]);
     this.fovy = fovy;
     this.aspect = aspect;

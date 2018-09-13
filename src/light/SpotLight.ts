@@ -63,7 +63,9 @@ export default class SpotLight extends ShadowLight {
       } else {
         spotEffect = 0.0;
       }
-      return attenuation * (ambient + spotEffect * diffuse + specular);
+
+      float shadow = calcShadow(u_ShadowMap${this.index}, v_PositionFromLight${this.index}, lightDir, normal);
+      return ambient + attenuation * shadow * (spotEffect * diffuse + specular);
     }
   `;
 

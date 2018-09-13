@@ -40,7 +40,9 @@ const controls = container.get<IControlsService>(SERVICE_IDENTIFIER.IControlsSer
 
 // Setup camera
 const { width, height } = canvas.getSize();
-camera.init($V([0, 7.0, 9]), 45, width / height, .01, 100);
+camera.init($V([0, 10, 10]), $V([0.001, 0.001, 0.001]), 60, width / height, 1, 100);
+// camera.dolly(0.001);
+// camera.center.add([0.001, 0.001, 0.001])
 
 // Setup meshes & lights in current scene
 scene.addMesh(new Mesh({
@@ -61,6 +63,7 @@ scene.addMesh(new Mesh({
   geometry: triangle
 }));
 const cube = new Cube({
+  color: $V([0.0, 0.5, 0.0]),
   center: $V([0, 1.5, 0]),
   width: 1,
   height: 1,
@@ -71,61 +74,62 @@ scene.addMesh(new Mesh({
 }));
 scene.addMesh(new Mesh({
   geometry: new Sphere({
+    color: $V([0.9, 0.9, 0.9]),
     center: $V([1.5, 1.5, 1.5]),
     radius: 0.5
   })
 }));
 
 // scene.addLight(new PointLight({
-//   color: $V([1, 1, 1]),
 //   position: $V([-5, 5, -5]),
 //   model: new LightModel({
 //     ambient: $V([0.05, 0.05, 0.05]),
 //     diffuse: $V([0.4, 0.4, 0.4]),
 //     specular: $V([0.5, 0.5, 0.5]),
-//     attenuation: {
-//       linear: 0.1,
-//       quadratic: 0.01
-//     }
+//     // attenuation: {
+//     //   linear: 0.1,
+//     //   quadratic: 0.01
+//     // }
 //   })
 // }));
-scene.addLight(new DirectionalLight({
+// scene.addLight(new DirectionalLight({
+//   direction: $V([0, -1, 0]),
+//   model: new LightModel({
+//     ambient: $V([0.2, 0.2, 0.2]),
+//     diffuse: $V([0.4, 0.4, 0.4]),
+//     specular: $V([0.5, 0.5, 0.5])
+//   })
+// }));
+scene.addLight(new SpotLight({
+  position: $V([1, 15, 0]),
   direction: $V([0, -1, 0]),
+  angle: 14,
+  exponent: 40,
   model: new LightModel({
     ambient: $V([0.2, 0.2, 0.2]),
-    diffuse: $V([0.4, 0.4, 0.4]),
-    specular: $V([0.5, 0.5, 0.5])
+    diffuse: $V([1, 1, 1]),
+    specular: $V([1, 1, 1]),
+    attenuation: {
+      linear: 0.1,
+      quadratic: 0.01
+    }
   })
 }));
-// scene.addLight(new SpotLight({
-//   color: $V([.8, .8, .8]),
-//   position: $V([5, 5, 0]),
-//   direction: $V([-1, -1, 0]),
-//   angle: 14,
-//   exponent: 40,
-//   model: new LightModel({
-//     ambient: $V([0, 0, 0]),
-//     diffuse: $V([1, 1, 1]),
-//     specular: $V([1, 1, 1]),
-//     attenuation: {
-//       linear: 0.1,
-//       quadratic: 0.01
-//     }
-//   })
-// }));
-// scene.addLight(new SpotLight({
-//   // color: $V([.8, .8, .8]),
-//   position: $V([-15, 15, 0]),
-//   direction: $V([1, -1, 0]),
-//   angle: 14,
-//   exponent: 40,
-//   model: {
-//     attenuation: {
-//       linear: 0.1,
-//       quadratic: 0.01
-//     }
-//   }
-// }));
+scene.addLight(new SpotLight({
+  position: $V([-1, 15, 0]),
+  direction: $V([0, -1, 0]),
+  angle: 14,
+  exponent: 40,
+  model: new LightModel({
+    ambient: $V([0.2, 0.2, 0.2]),
+    diffuse: $V([1, 1, 1]),
+    specular: $V([1, 1, 1]),
+    attenuation: {
+      linear: 0.1,
+      quadratic: 0.01
+    }
+  })
+}));
 
 renderer.addShader(new ShadowShader(canvas, scene, camera));
 renderer.addShader(new DisplayShader(canvas, scene, camera));
