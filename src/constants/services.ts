@@ -5,13 +5,7 @@ const SERVICE_IDENTIFIER = {
   ICanvasService: Symbol('ICanvasService'),
   IRendererService: Symbol('IRendererService'),
   IControlsService: Symbol('IControlsService'),
-  
-  ISceneServiceFactory: Symbol('Factory<ISceneService>'),
-  ICameraServiceFactory: Symbol('Factory<ICameraService>'),
-  IMouseServiceFactory: Symbol('Factory<IMouseService>'),
-  ICanvasServiceFactory: Symbol('Factory<ICanvasService>'),
-  IRendererServiceFactory: Symbol('Factory<IRendererService>'),
-  IControlsServiceFactory: Symbol('Factory<IControlsService>')
+  ITextureLoaderService: Symbol('ITextureLoaderService'),
 };
 
 export default SERVICE_IDENTIFIER;

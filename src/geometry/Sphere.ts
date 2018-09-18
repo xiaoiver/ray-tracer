@@ -65,6 +65,8 @@ export default class Sphere extends Geometry {
     this.vertices = new Float32Array(positions);
     this.normals = new Float32Array(positions);
     this.indices = new Uint16Array(indices);
+
+    this.textureCoords = this.vertices.filter((v, i) => i % 3 !== 1).map(v => v / 2 + 0.5);
   }
 
   setModelMatrix() {

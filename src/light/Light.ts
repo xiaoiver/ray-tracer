@@ -1,4 +1,3 @@
-import { IShader } from '../shaders/Shader';
 import LightModel from './models/LightModel';
 
 export interface LightOptions {
@@ -9,7 +8,7 @@ export interface LightOptions {
 
 export interface ILight extends LightOptions {
   readonly index: number;
-  setUniforms(shader: IShader, namespace: string): void;
+  setUniforms(gl: WebGLRenderingContext, program: WebGLProgram, namespace: string): void;
 }
 
 let index = 0;
@@ -27,5 +26,5 @@ export abstract class Light implements ILight {
     Object.assign(this, options);
   }
 
-  setUniforms(shader: IShader, namespace: string) {}
+  setUniforms(gl: WebGLRenderingContext, program: WebGLProgram, namespace: string) {}
 }

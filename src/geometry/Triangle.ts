@@ -36,6 +36,8 @@ export default class Triangle extends Geometry {
     this.indices = new Uint8Array([
       0, 1, 2
     ]);
+
+    this.textureCoords = this.vertices.filter((v, i) => i % 3 !== 1).map(v => v / 2 + 0.5);
   }
 
   setModelMatrix() {}

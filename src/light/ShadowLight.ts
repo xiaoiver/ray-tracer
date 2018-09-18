@@ -1,6 +1,7 @@
 import { Light, LightOptions } from './Light';
 import Shader, {FBO} from '../shaders/Shader';
 import { IShaderSnippet } from '../shaders/ShaderSnippet';
+import { setUniforms } from '../utils/gl';
 
 export default class ShadowLight extends Light {
   fbo: FBO;
@@ -40,8 +41,11 @@ export default class ShadowLight extends Light {
     };
   }
 
-  setUniforms(shader: Shader, namespace: string) {
-    const location = shader.gl.getUniformLocation(shader.program, this.uShadowMap);
-    shader.gl.uniform1i(location, this.fboTextureIdx);
+  setUniforms(gl: WebGLRenderingContext, program: WebGLProgram, namespace: string) {
+    super.setUniforms(gl, program, namespace);
+
+    setUniforms(gl, program, {
+      [this.uShadowMap]: this.fboTextureIdx
+    }, 'int');
   }
 }

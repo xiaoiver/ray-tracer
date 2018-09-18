@@ -9,13 +9,13 @@ import { ICanvasService } from './Canvas';
 import Shader from '../shaders/Shader';
 
 export interface IRendererService {
+  gl: WebGLRenderingContext;
+
   render(): void;
   addShader(shader: Shader): void;
   updateShaders(): void;
   updateScene(): void;
 }
-
-let gl: WebGLRenderingContext;
 
 @injectable()
 export default class Renderer implements IRendererService {
@@ -25,6 +25,8 @@ export default class Renderer implements IRendererService {
   private shaders: Array<Shader> = [];
   private clearColor: Vector = $V([0,0,0]);
 
+  gl: WebGLRenderingContext;
+
   constructor(
     @inject(SERVICE_IDENTIFIER.ICanvasService) _canvas: ICanvasService,
     @inject(SERVICE_IDENTIFIER.ISceneService) _scene: ISceneService
@@ -32,14 +34,15 @@ export default class Renderer implements IRendererService {
     this.canvas = _canvas;
     this.scene = _scene;
 
-    gl = <WebGLRenderingContext> getWebGLContext(this.canvas.el);
+    const gl = <WebGLRenderingContext> getWebGLContext(this.canvas.el);
+    this.gl = gl;
     if (!gl) {
       console.log('Failed to get the rendering context for WebGL.');
       return;
     }
-    gl.clearColor(this.clearColor.e(1), this.clearColor.e(2), this.clearColor.e(3), 1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.CULL_FACE);
+    this.gl.clearColor(this.clearColor.e(1), this.clearColor.e(2), this.clearColor.e(3), 1.0);
+    this.gl.enable(gl.DEPTH_TEST);
+    this.gl.enable(gl.CULL_FACE);
   }
 
   addShader(shader: Shader) {
@@ -59,7 +62,7 @@ export default class Renderer implements IRendererService {
   render() {
     this.shaders.forEach(shader => {
       if (!shader.inited) {
-        shader.init(gl);
+        shader.init(this.gl);
       }
     });
 

@@ -2,6 +2,7 @@ import { Light, LightOptions } from './Light';
 import { UNIFORM_POINT_LIGHT_COLOR, UNIFORM_POINT_LIGHT_POSITION } from '../constants/index';
 import Shader from '../shaders/Shader';
 import ShadowLight from './ShadowLight';
+import { setUniforms } from '../utils/gl';
 
 interface PointLightOptions extends LightOptions {};
 
@@ -44,9 +45,9 @@ export default class PointLight extends ShadowLight {
     Object.assign(this, options);
   }
 
-  setUniforms(shader: Shader, namespace: string) {
-    super.setUniforms(shader, namespace);
-    shader.setUniforms({
+  setUniforms(gl: WebGLRenderingContext, program: WebGLProgram, namespace: string) {
+    super.setUniforms(gl, program, namespace);
+    setUniforms(gl, program, {
       [`${namespace}.position`]: this.position,
       [`${namespace}.ambient`]: this.model.ambient,
       [`${namespace}.diffuse`]: this.model.diffuse,

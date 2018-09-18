@@ -1,36 +1,24 @@
 import { Matrix } from 'sylvester';
 
-export interface GeometryOptions {
-  color?: Vector;
-}
-
-const DEFAULT_GEOMETRY_OPTIONS : GeometryOptions = {
-  color: $V([1, 1, 1])
-};
+export interface GeometryOptions {}
 
 export abstract class Geometry {
-  color: Vector;
   vertices: Float32Array;
   normals: Float32Array;
-  colors: Float32Array;
+  textureCoords: Float32Array;
   indices: Uint8Array | Uint16Array;
   modelMatrix: Matrix;
   protected abstract setVertices(): void;
   protected abstract setModelMatrix(): void;
 
-  constructor(options: GeometryOptions) {
-    Object.assign(this, DEFAULT_GEOMETRY_OPTIONS, options);
+  constructor(options: Partial<GeometryOptions>) {
+    Object.assign(this, options);
     this.modelMatrix = Matrix.I(4);
   }
 
   init() {
     this.setVertices();
     this.setModelMatrix();
-    this.setColors();
-  }
-
-  setColors() {
-    this.colors = this.vertices.map((v, i) => this.color.e(i % 3 + 1));
   }
 
   /**

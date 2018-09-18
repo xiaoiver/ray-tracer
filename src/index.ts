@@ -9,18 +9,20 @@ import { ISceneService } from './services/Scene';
 import { ICameraService } from './services/Camera';
 import { ICanvasService } from './services/Canvas';
 import { IControlsService } from './services/Controls';
+import { ITextureLoaderService } from './services/TextureLoader';
 
 import Mesh from './Mesh';
 import Sphere from './geometry/Sphere';
 import Cube from './geometry/Cube';
 import Plane from './geometry/Plane';
 import Triangle from './geometry/Triangle';
-import DirectionalLight from './light/DirectionalLight';
+// import DirectionalLight from './light/DirectionalLight';
 import PointLight from './light/PointLight';
 import SpotLight from './light/SpotLight';
 import DisplayShader from './shaders/DisplayShader';
 import ShadowShader from './shaders/ShadowShader';
 import LightModel from './light/models/LightModel';
+import Material from './material/Material';
 // import RayTracer from './shaders/RayTracer';
 
 // setup stats
@@ -37,46 +39,54 @@ const renderer = container.get<IRendererService>(SERVICE_IDENTIFIER.IRendererSer
 const canvas = container.get<ICanvasService>(SERVICE_IDENTIFIER.ICanvasService);
 const camera = container.get<ICameraService>(SERVICE_IDENTIFIER.ICameraService);
 const controls = container.get<IControlsService>(SERVICE_IDENTIFIER.IControlsService);
+const textureLoader = container.get<ITextureLoaderService>(SERVICE_IDENTIFIER.ITextureLoaderService);
+
+const floorTexture = textureLoader.load('https://raw.githubusercontent.com/josdirksen/learning-threejs/master/assets/textures/general/floor-wood.jpg');
 
 // Setup camera
 const { width, height } = canvas.getSize();
 camera.init($V([0, 10, 10]), $V([0.001, 0.001, 0.001]), 60, width / height, 1, 100);
-// camera.dolly(0.001);
-// camera.center.add([0.001, 0.001, 0.001])
 
 // Setup meshes & lights in current scene
 scene.addMesh(new Mesh({
   geometry: new Plane({
     width: 10,
     height: 10
+  }),
+  material: new Material({
+    // color: $V([1.0, 0, 0]),
+    texture: floorTexture
   })
-  // .rotate(-45, $V([0, 1, 1]))
 }));
-const triangle = new Triangle({
-  color: $V([1.0, 0.5, 0.0,  1.0, 0.5, 0.0,  1.0, 0.0, 0.0]),
-  p1: $V([-0.8, 3.5, 0.0]),
-  p2: $V([0.0, 3.5, 1.8]),
-  p3: $V([0.8, 3.5, 0.0]),
-});
-triangle.translate($V([1.2, 0, 0]));
-scene.addMesh(new Mesh({
-  geometry: triangle
-}));
-const cube = new Cube({
-  color: $V([0.0, 0.5, 0.0]),
-  center: $V([0, 1.5, 0]),
-  width: 1,
-  height: 1,
-  depth: 1
-});
-scene.addMesh(new Mesh({
-  geometry: cube
-}));
+// const triangle = new Triangle({
+//   p1: $V([-0.8, 3.5, 0.0]),
+//   p2: $V([0.0, 3.5, 1.8]),
+//   p3: $V([0.8, 3.5, 0.0]),
+// });
+// triangle.translate($V([1.2, 0, 0]));
+// scene.addMesh(new Mesh({
+//   geometry: triangle,
+//   material: new Material({
+//     color: $V([1.0, 0.5, 0.0])
+//   })
+// }));
+// const cube = new Cube({
+//   color: $V([0.0, 0.5, 0.0]),
+//   center: $V([0, 1.5, 0]),
+//   width: 1,
+//   height: 1,
+//   depth: 1
+// });
+// scene.addMesh(new Mesh({
+//   geometry: cube
+// }));
 scene.addMesh(new Mesh({
   geometry: new Sphere({
-    color: $V([0.9, 0.9, 0.9]),
     center: $V([1.5, 1.5, 1.5]),
     radius: 0.5
+  }),
+  material: new Material({
+    color: $V([1.0, 0.5, 0.0])
   })
 }));
 
@@ -136,8 +146,8 @@ renderer.addShader(new DisplayShader(canvas, scene, camera));
 
 const tick = function() {
   stats.update();
-  triangle.rotate(.02, $V([0, 1, 0]));
-  cube.rotate(0.01, $V([0, 1, 0]));
+  // triangle.rotate(.02, $V([0, 1, 0]));
+  // cube.rotate(0.01, $V([0, 1, 0]));
 
   renderer.render();
   requestAnimationFrame(tick);

@@ -9,6 +9,7 @@ import Canvas, { ICanvasService } from './services/Canvas';
 import Mouse, { IMouseService } from './services/Mouse';
 import Renderer, { IRendererService } from './services/Renderer';
 import Controls, { IControlsService } from './services/Controls';
+import TextureLoader, { ITextureLoaderService } from './services/TextureLoader';
 
 const container = new Container();
 
@@ -18,6 +19,7 @@ container.bind<ICanvasService>(SERVICE_IDENTIFIER.ICanvasService).to(Canvas).inS
 container.bind<IMouseService>(SERVICE_IDENTIFIER.IMouseService).to(Mouse).inSingletonScope();
 container.bind<IRendererService>(SERVICE_IDENTIFIER.IRendererService).to(Renderer).inSingletonScope();
 container.bind<IControlsService>(SERVICE_IDENTIFIER.IControlsService).to(Controls).inSingletonScope();
+container.bind<ITextureLoaderService>(SERVICE_IDENTIFIER.ITextureLoaderService).to(TextureLoader).inSingletonScope();
 
 decorate(injectable(), EventEmitter);
 

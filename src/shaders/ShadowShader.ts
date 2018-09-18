@@ -9,105 +9,26 @@ import { ICanvasService } from '../services/Canvas';
 import { ISceneService } from '../services/Scene';
 import { IControlsService } from '../services/Controls';
 import DirectionalLight from '../light/DirectionalLight';
+import { setVertexAttribute, setUniforms } from '../utils/gl';
 
-const OFFSCREEN_WIDTH = 2048;
-const OFFSCREEN_HEIGHT = 2048;
+export const OFFSCREEN_WIDTH = 2048;
+export const OFFSCREEN_HEIGHT = 2048;
 
 export enum ShadowMode {
-  Simple = 'simple',
+  LowPrecision = 'low-precision',
   HighPrecision = 'high-precision',
   Lerp = 'lerp',
   PCF = 'pcf',
-  PCFLerp = 'pcf-lerp'
+  PCFLerp = 'pcf-lerp',
+  PoissionDisk = 'poission-disk',
+  StratifiedPoissionDisk = 'stratified-poission-disk'
+  // VSM = 'variance-shadow-mapping'
 }
 
 @injectable()
 export default class ShadowShader extends Shader {
 
   static mode: ShadowMode = ShadowMode.HighPrecision;
-
-  static generateFunctionsInDisplayShader() {
-    let fragmentCode = '';
-    if (this.mode === ShadowMode.Simple) {
-      fragmentCode = `
-        vec4 rgbaDepth = texture2D(depths, shadowCoord.xy);
-        return step(shadowCoord.z - bias, rgbaDepth.r);
-      `;
-    } else if (this.mode === ShadowMode.HighPrecision) {
-      fragmentCode = `
-        return texture2DCompare(depths, shadowCoord.xy, shadowCoord.z, bias);
-      `;
-    } else if (this.mode === ShadowMode.Lerp) {
-      fragmentCode = `
-        return texture2DShadowLerp(depths, shadowCoord.xy, shadowCoord.z, bias);
-      `;
-    } else if (this.mode === ShadowMode.PCF) {
-      fragmentCode = `
-        return PCF(depths, shadowCoord.xy, shadowCoord.z, bias);
-      `;
-    } else if (this.mode === ShadowMode.PCFLerp) {
-      fragmentCode = `
-        return PCFLerp(depths, shadowCoord.xy, shadowCoord.z, bias);
-      `;
-    }
-    return `
-      vec2 texelSize = vec2(1.0) / vec2(${OFFSCREEN_WIDTH.toFixed(5), OFFSCREEN_HEIGHT.toFixed(5)});
-
-      // high-precision
-      float unpackDepth(const in vec4 rgbaDepth) {
-        const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
-        float depth = dot(rgbaDepth, bitShift);
-        return depth;
-      }
-      float texture2DCompare(sampler2D depths, vec2 uv, float compare, float bias){
-        float depth = unpackDepth(texture2D(depths, uv));
-        return step(compare - bias, depth);
-      }
-
-      // lerp
-      float texture2DShadowLerp(sampler2D depths, vec2 uv, float compare, float bias){
-        vec2 f = fract(uv);
-        float lb = texture2DCompare(depths, uv + texelSize * vec2(0.0, 0.0), compare, bias);
-        float lt = texture2DCompare(depths, uv + texelSize * vec2(0.0, 1.0), compare, bias);
-        float rb = texture2DCompare(depths, uv + texelSize * vec2(1.0, 0.0), compare, bias);
-        float rt = texture2DCompare(depths, uv + texelSize * vec2(1.0, 1.0), compare, bias);
-        float a = mix(lb, lt, f.y);
-        float b = mix(rb, rt, f.y);
-        float c = mix(a, b, f.x);
-        return c;
-      }
-
-      // pcf
-      float PCF(sampler2D depths, vec2 uv, float compare, float bias){
-        float result = 0.0;
-        for (int x = -2; x <= 2; x++) {
-          for (int y = -2; y <= 2; y++) {
-            vec2 off = texelSize * vec2(x,y);
-            result += texture2DCompare(depths, uv + off, compare, bias);
-          }
-        }
-        return result / 25.0;
-      }
-
-      // pcf & lerp
-      float PCFLerp(sampler2D depths, vec2 uv, float compare, float bias){
-        float result = 0.0;
-        for(int x = -1; x <= 1; x++){
-          for(int y = -1; y <= 1; y++){
-            vec2 off = texelSize * vec2(x,y);
-            result += texture2DShadowLerp(depths, uv + off, compare, bias);
-          }
-        }
-        return result / 9.0;
-      }
-
-      float calcShadow(sampler2D depths, vec4 positionFromLight, vec3 lightDir, vec3 normal) {
-        vec3 shadowCoord = (positionFromLight.xyz / positionFromLight.w) * 0.5 + 0.5;
-        float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-        ${fragmentCode}
-      }
-    `;
-  }
 
   constructor(
     @inject(SERVICE_IDENTIFIER.ICanvasService) canvas: ICanvasService,
@@ -118,14 +39,6 @@ export default class ShadowShader extends Shader {
   }
 
   generateShaders() {
-    const vertexShader = `
-      attribute vec4 a_Position;
-      uniform mat4 u_MvpMatrix;
-      void main() {
-        gl_Position = u_MvpMatrix * a_Position;
-      }
-    `;
-
     const gl = this.gl;
     let fbo: FBO;
     let fboTextureIdx: number = 0;
@@ -153,7 +66,14 @@ export default class ShadowShader extends Shader {
     });
 
     let fragmentShader;
-    if (ShadowShader.mode === ShadowMode.Simple) {
+    let vertexShader = `
+      attribute vec4 a_Position;
+      uniform mat4 u_MvpMatrix;
+      void main() {
+        gl_Position = u_MvpMatrix * a_Position;
+      }
+    `;
+    if (ShadowShader.mode === ShadowMode.LowPrecision) {
       fragmentShader = `
         precision mediump float;
         void main() {
@@ -163,7 +83,9 @@ export default class ShadowShader extends Shader {
     } else if (ShadowShader.mode === ShadowMode.HighPrecision
       || ShadowShader.mode === ShadowMode.Lerp
       || ShadowShader.mode === ShadowMode.PCF
-      || ShadowShader.mode === ShadowMode.PCFLerp) {
+      || ShadowShader.mode === ShadowMode.PCFLerp
+      || ShadowShader.mode === ShadowMode.PoissionDisk
+      || ShadowShader.mode === ShadowMode.StratifiedPoissionDisk) {
       fragmentShader = `
         precision mediump float;
         void main() {
@@ -174,6 +96,20 @@ export default class ShadowShader extends Shader {
           gl_FragColor = rgbaDepth;
         }
       `;
+    // } else if (ShadowShader.mode === ShadowMode.VSM) {
+    //   vertexShader = `
+
+    //   `;
+    //   fragmentShader = `
+    //     precision mediump float;
+    //     void main(){
+    //       vec3 lightPos = (lightView * vWorldPosition).xyz;
+    //       float depth = clamp(length(lightPos)/40.0, 0.0, 1.0);
+    //       float dx = dFdx(depth);
+    //       float dy = dFdy(depth);
+    //       gl_FragColor = vec4(depth, pow(depth, 2.0) + 0.25*(dx*dx + dy*dy), 0.0, 1.0);
+    //     }
+    //   `;
     }
 
     return {
@@ -183,7 +119,7 @@ export default class ShadowShader extends Shader {
   }
 
   draw() {
-    const gl = this.gl;
+    const {gl, program} = this;
     gl.useProgram(this.program);
     // gl.cullFace(gl.FRONT);
     
@@ -207,7 +143,7 @@ export default class ShadowShader extends Shader {
           // Set a texture object to the texture unit
           gl.activeTexture((<any>gl)[textureName]);
           gl.bindTexture(gl.TEXTURE_2D, light.fbo.texture);
-          
+
           if (light instanceof DirectionalLight) {
             lightPosition = light.direction.x(-10).subtract(this.camera.center);
             projectionMatrix = this.camera.ortho(-10, 10, -10, 10, this.camera.znear, this.camera.zfar);
@@ -225,11 +161,11 @@ export default class ShadowShader extends Shader {
             // Save this mvpmatrix in current mesh for later use in display shader
             mesh.mvpMatrixFromLight[`${light.index}`] = mvpMatrixFromLight;
       
-            this.setUniforms({
+            setUniforms(gl, program, {
               'u_MvpMatrix': mvpMatrixFromLight
             });
       
-            if (!this.setVertexAttribute('a_Position', vertices, 3, gl.FLOAT)) return -1;
+            if (!setVertexAttribute(gl, program, 'a_Position', vertices, 3, gl.FLOAT)) return -1;
       
             mesh.geometry.draw(gl);
           });

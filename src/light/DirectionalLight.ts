@@ -2,6 +2,7 @@ import ShadowLight from './ShadowLight';
 import { Light, LightOptions } from './Light';
 import { UNIFORM_DIRECTIONAL_LIGHT_COLOR, UNIFORM_DIRECTIONAL_LIGHT_DIRECTION } from '../constants';
 import Shader from '../shaders/Shader';
+import { setUniforms } from '../utils/gl';
 
 interface DirectionalLightOptions extends LightOptions {
   direction: Vector
@@ -49,9 +50,9 @@ export default class DirectionalLight extends ShadowLight {
     Object.assign(this, options);
   }
 
-  setUniforms(shader: Shader, namespace: string) {
-    super.setUniforms(shader, namespace);
-    shader.setUniforms({
+  setUniforms(gl: WebGLRenderingContext, program: WebGLProgram, namespace: string) {
+    super.setUniforms(gl, program, namespace);
+    setUniforms(gl, program, {
       [`${namespace}.direction`]: this.direction,
       [`${namespace}.ambient`]: this.model.ambient,
       [`${namespace}.diffuse`]: this.model.diffuse,

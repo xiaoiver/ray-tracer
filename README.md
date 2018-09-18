@@ -8,11 +8,13 @@ Features:
 - [x] Use API like Three.js
 - [x] Camera movement with mouse, including truck, pedestal, dolly, pan, tilt, cant
 - [x] Resizable canvas 
-- [x] Fundamental scene, including Cube & Sphere
+- [x] Fundamental scene, including Cube, Sphere, Plane, Triange
 - [x] Phong model ambient + diffuse + specular
-- [x] Shadow mapping, including Lerp, PCF
+- [x] Shadow mapping, including Lerp, PCF, VSM
 - [-] Ray tracing
 - [-] Offscreen Canvas
+- [-] Texture management, eg. LRU
+- [-] Procedural Texturing
 
 Inspired by following resources:
 - [webglfundamentals-resize-canvas](https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html)

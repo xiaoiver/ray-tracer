@@ -54,18 +54,12 @@ export default class Scene implements ISceneService {
     this.lightsInfo[light.type].lights.push(light);
   }
 
-  removeLight(light: Light) {
-
-  }
-
   getLightsInfo(): LightsInfo {
     return this.lightsInfo;
   }
 
   init() {
-    this.meshes.forEach(mesh => {
-      mesh.geometry.init();
-    });
+    this.meshes.forEach(mesh => mesh.init());
     this.inited = true;
   }
 }

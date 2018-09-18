@@ -6,7 +6,7 @@ import {
   UNIFORM_SPOT_LIGHT_DIRECTION
 } from '../constants/index';
 import Shader from '../shaders/Shader';
-import { IShaderSnippet } from '../shaders/ShaderSnippet';
+import { setUniforms } from '../utils/gl';
 
 interface SpotLightOptions extends LightOptions {
   direction: Vector;
@@ -79,10 +79,10 @@ export default class SpotLight extends ShadowLight {
     Object.assign(this, options);
   }
 
-  setUniforms(shader: Shader, namespace: string) {
-    super.setUniforms(shader, namespace);
+  setUniforms(gl: WebGLRenderingContext, program: WebGLProgram, namespace: string) {
+    super.setUniforms(gl, program, namespace);
 
-    shader.setUniforms({
+    setUniforms(gl, program, {
       [`${namespace}.position`]: this.position,
       [`${namespace}.direction`]: this.direction,
       [`${namespace}.ambient`]: this.model.ambient,

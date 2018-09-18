@@ -27,11 +27,13 @@ interface ICameraControl {
 
 interface IShadowControl {
   mode: {
-    [ShadowMode.Simple]: boolean,
+    [ShadowMode.LowPrecision]: boolean,
     [ShadowMode.HighPrecision]: boolean,
     [ShadowMode.Lerp]: boolean,
     [ShadowMode.PCF]: boolean,
-    [ShadowMode.PCFLerp]: boolean
+    [ShadowMode.PCFLerp]: boolean,
+    [ShadowMode.PoissionDisk]: boolean,
+    [ShadowMode.StratifiedPoissionDisk]: boolean
   }
 }
 
@@ -82,11 +84,13 @@ export default class Controls extends EventEmitter implements IControlsService {
 
     this.shadowController = {
       mode: {
-        [ShadowMode.Simple]: false,
+        [ShadowMode.LowPrecision]: false,
         [ShadowMode.HighPrecision]: true,
         [ShadowMode.Lerp]: false,
         [ShadowMode.PCF]: false,
-        [ShadowMode.PCFLerp]: false
+        [ShadowMode.PCFLerp]: false,
+        [ShadowMode.PoissionDisk]: false,
+        [ShadowMode.StratifiedPoissionDisk]: false
       }
     }
 
