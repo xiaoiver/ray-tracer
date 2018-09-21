@@ -3,12 +3,11 @@ import SERVICE_IDENTIFIER from '../constants/services';
 import { IRendererService } from '../services/Renderer';
 import Texture from '../texture/Texture';
 import { isPowerOf2 } from '../utils/math';
+import { DEFAULT_TEXTURE_ID } from '../constants';
 
 export interface ITextureLoaderService {
   load(url: string): Texture;
 }
-
-export const DEFAULT_TEXTURE_ID = 10;
 
 @injectable()
 export default class TextureLoader implements ITextureLoaderService {
@@ -18,6 +17,10 @@ export default class TextureLoader implements ITextureLoaderService {
     @inject(SERVICE_IDENTIFIER.IRendererService) _renderer: IRendererService
   ) {
     this.renderer = _renderer;
+
+    const gl = this.renderer.gl;
+    // http://webglreport.com/?v=2
+    const maxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
   }
 
   load(url: string): Texture {

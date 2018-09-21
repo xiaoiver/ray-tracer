@@ -13,7 +13,7 @@ import PointLight from '../light/PointLight';
 import ShadowLight from '../light/ShadowLight';
 import Texture from '../texture/Texture';
 import { LightMatrixMap } from '../Mesh';
-import { DEFAULT_TEXTURE_ID } from '../services/TextureLoader';
+import { DEFAULT_TEXTURE_ID } from '../constants';
 import { setVertexAttribute, setUniforms } from '../utils/gl';
 import LowPrecision from '../light/shadows/LowPrecision';
 import Lerp from '../light/shadows/Lerp';
@@ -175,7 +175,7 @@ export default class DisplayShader extends Shader {
     }
 
     const location = this.gl.getUniformLocation(program, 'u_MaterialTexture');
-    this.gl.uniform1i(location, texture && texture.id || 10);
+    this.gl.uniform1i(location, texture && texture.id || DEFAULT_TEXTURE_ID);
     if (!setVertexAttribute(gl, program, 'a_TextureCoord', textureCoords, 2, gl.FLOAT)) return -1;
   }
 

@@ -2,7 +2,7 @@ import { injectable, inject } from 'inversify';
 import { EventEmitter } from 'eventemitter3';
 import Canvas, { ICanvasService } from './Canvas';
 import SERVICE_IDENTIFIER from '../constants/services';
-import { canvasMousePos } from '../utils/dom';
+import * as Hammer from 'hammerjs';
 
 export interface IMouseService {
   on(name: string, cb: Function): void;
@@ -36,48 +36,45 @@ export default class Mouse extends EventEmitter implements IMouseService {
   ) {
     super();
     this.canvas = _canvas;
-    this.onMousedown = this.onMousedown.bind(this);
-    this.onMousemove = this.onMousemove.bind(this);
-    this.onMouseup = this.onMouseup.bind(this);
-    this.onMouseout = this.onMouseout.bind(this);
+    this.onPanstart = this.onPanstart.bind(this);
+    this.onPanmove = this.onPanmove.bind(this);
+    this.onPanend = this.onPanend.bind(this);
+    this.onPinch = this.onPinch.bind(this);
     this.onMousewheel = this.onMousewheel.bind(this);
 
-    this.canvas.el.addEventListener('mousedown', this.onMousedown, false);
-    this.canvas.el.addEventListener('mousemove', this.onMousemove, false);
-    this.canvas.el.addEventListener('mouseup', this.onMouseup, false);
-    this.canvas.el.addEventListener('mouseout', this.onMouseout, false);
-    this.canvas.el.addEventListener('wheel', this.onMousewheel, false);
+    const hammertime = new Hammer(this.canvas.el);
+    hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+    hammertime.get('pinch').set({ enable: true });
+
+    hammertime.on('panstart', this.onPanstart);
+    hammertime.on('panmove', this.onPanmove);
+    hammertime.on('panend', this.onPanend);
+    hammertime.on('pinch', this.onPinch);
+    
+    this.canvas.el.addEventListener('wheel', this.onMousewheel)
   }
 
-  onMouseup(e: MouseEvent) {
+  onPanend(e: HammerInput) {
     this.isMoving = false;
     this.emit(Mouse.UP_EVENT);
   }
 
-  onMouseout(e: MouseEvent) {
-    this.isMoving = false;
-    this.emit(Mouse.OUT_EVENT);
-  }
-
-  onMousedown(e: MouseEvent) {
-    let {x, y} = canvasMousePos(e, this.canvas.el);
-
-    this.lastX = x;
-    this.lastY = y;
+  onPanstart(e: HammerInput) {
+    this.lastX = e.center.x;
+    this.lastY = e.center.y;
     this.isMoving = true;
     this.deltaZ = 0;
 
     this.emit(Mouse.DOWN_EVENT);
   }
 
-  onMousemove(e: MouseEvent) {
+  onPanmove(e: HammerInput) {
     if (this.isMoving) {
-      let {x, y} = canvasMousePos(e, this.canvas.el);
-      this.deltaX = x - this.lastX;
-      this.deltaY = y - this.lastY;
+      this.deltaX = e.center.x - this.lastX;
+      this.deltaY = e.center.y - this.lastY;
 
-      this.lastX = x;
-      this.lastY = y;
+      this.lastX = e.center.x;
+      this.lastY = e.center.y;
 
       this.emit(Mouse.MOVE_EVENT, {
         deltaX: this.deltaX,
@@ -89,6 +86,15 @@ export default class Mouse extends EventEmitter implements IMouseService {
 
   onMousewheel(e: WheelEvent) {
     this.deltaZ = e.deltaY;
+    this.emit(Mouse.WHEEL_EVENT, {
+      deltaX: this.deltaX,
+      deltaY: this.deltaY,
+      deltaZ: this.deltaZ
+    });
+  }
+
+  onPinch(e: HammerInput) {
+    this.deltaZ = (1 - e.scale) * 10;
     this.emit(Mouse.WHEEL_EVENT, {
       deltaX: this.deltaX,
       deltaY: this.deltaY,
