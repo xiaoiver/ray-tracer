@@ -9,13 +9,14 @@ Features:
 - [x] Support touch gestures with Hammer.js
 - [x] Camera movement including truck, pedestal, dolly, pan, tilt, cant
 - [x] Resizable canvas
-- [x] Fundamental scene, including Cube, Sphere, Plane, Triange
+- [x] Fundamental scene, including Cube, Sphere, Plane, Triangle
 - [x] Phong model ambient + diffuse + specular
 - [x] Shadow mapping, including Lerp, PCF, VSM
 - [ ] Ray tracing
 - [ ] Offscreen Canvas
 - [ ] Texture management, eg. LRU
 - [ ] Procedural Texturing
+- [ ] https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
 
 Inspired by following resources:
 - [webglfundamentals-resize-canvas](https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html)

@@ -20,8 +20,8 @@ export enum ShadowMode {
   Lerp = 'lerp',
   PCF = 'pcf',
   PCFLerp = 'pcf-lerp',
-  PoissionDisk = 'poission-disk',
-  StratifiedPoissionDisk = 'stratified-poission-disk'
+  PoissonDisk = 'poission-disk',
+  StratifiedPoissonDisk = 'stratified-poission-disk'
   // VSM = 'variance-shadow-mapping'
 }
 
@@ -84,8 +84,8 @@ export default class ShadowShader extends Shader {
       || ShadowShader.mode === ShadowMode.Lerp
       || ShadowShader.mode === ShadowMode.PCF
       || ShadowShader.mode === ShadowMode.PCFLerp
-      || ShadowShader.mode === ShadowMode.PoissionDisk
-      || ShadowShader.mode === ShadowMode.StratifiedPoissionDisk) {
+      || ShadowShader.mode === ShadowMode.PoissonDisk
+      || ShadowShader.mode === ShadowMode.StratifiedPoissonDisk) {
       fragmentShader = `
         precision mediump float;
         void main() {

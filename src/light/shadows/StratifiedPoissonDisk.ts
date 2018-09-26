@@ -2,7 +2,7 @@ import { setUniforms } from '../../utils/gl';
 import Shadow from "./Shadow";
 
 // http://www.opengl-tutorial.org/cn/intermediate-tutorials/tutorial-16-shadow-mapping/#stratified-poisson-sampling
-export default class StratifiedPoissionDisk extends Shadow {
+export default class StratifiedPoissonDisk extends Shadow {
   constructor() {
     super();
 
@@ -18,20 +18,20 @@ export default class StratifiedPoissionDisk extends Shadow {
      * So, we can choose based on the pixel's position in world space.
      */
     this.snippet.fragment.declaration = `
-      uniform float uPoissionDisk[32];
+      uniform float uPoissonDisk[32];
       float random(vec3 seed, int i) {
         vec4 seed4 = vec4(seed,i);
         float dot_product = dot(seed4, vec4(12.9898,78.233,45.164,94.673));
         return fract(sin(dot_product) * 43758.5453);
       }
-      float StratifiedPoissionDisk(sampler2D depths, vec2 uv, float compare, float bias){
+      float StratifiedPoissonDisk(sampler2D depths, vec2 uv, float compare, float bias){
         float result = 0.0;
         for (int i = 0; i < 4; i++) {
           // int index = int(mod((16.0 * random(gl_FragCoord.xyy, i)), 16.0));
           int index = int(mod((16.0 * random(floor(v_Position.xyz), i)), 16.0));
           for (int j = 0; j < 16; j++) {
             if (j == index) {
-              result += texture2DCompare(depths, uv + vec2(uPoissionDisk[j * 2], uPoissionDisk[j * 2 + 1])/700.0, compare, bias);
+              result += texture2DCompare(depths, uv + vec2(uPoissonDisk[j * 2], uPoissonDisk[j * 2 + 1])/700.0, compare, bias);
               break;
             }
           }
@@ -40,12 +40,12 @@ export default class StratifiedPoissionDisk extends Shadow {
       }
     `;
     this.snippet.fragment.calculation = `
-      return StratifiedPoissionDisk(depths, shadowCoord.xy, shadowCoord.z, bias);
+      return StratifiedPoissonDisk(depths, shadowCoord.xy, shadowCoord.z, bias);
     `;
   }
 
   setUniforms(gl: WebGLRenderingContext, program: WebGLProgram): void {
-    const poissionDisk = [
+    const poissonDisk = [
       -0.94201624, -0.39906216,
       0.94558609, -0.76890725,
       -0.094184101, -0.92938870,
@@ -65,7 +65,7 @@ export default class StratifiedPoissionDisk extends Shadow {
     ];
     for (let i = 0; i < 32; i++) {
       setUniforms(gl, program, {
-        [`uPoissionDisk[${i}]`]: poissionDisk[i]
+        [`uPoissonDisk[${i}]`]: poissonDisk[i]
       });
     }
   }

@@ -19,8 +19,8 @@ import LowPrecision from '../light/shadows/LowPrecision';
 import Lerp from '../light/shadows/Lerp';
 import PCF from '../light/shadows/PCF';
 import PCFLerp from '../light/shadows/PCFLerp';
-import PoissionDisk from '../light/shadows/PoissionDisk';
-import StratifiedPoissionDisk from '../light/shadows/StratifiedPoissionDisk';
+import PoissonDisk from '../light/shadows/PoissonDisk';
+import StratifiedPoissonDisk from '../light/shadows/StratifiedPoissonDisk';
 
 let defaultTextureCreated = false;
 
@@ -47,10 +47,10 @@ export default class DisplayShader extends Shader {
       this.shadow = new PCF();
     } else if (ShadowShader.mode === ShadowMode.PCFLerp) {
       this.shadow = new PCFLerp();
-    } else if (ShadowShader.mode === ShadowMode.PoissionDisk) {
-      this.shadow = new PoissionDisk();
-    } else if (ShadowShader.mode === ShadowMode.StratifiedPoissionDisk) {
-      this.shadow = new StratifiedPoissionDisk();
+    } else if (ShadowShader.mode === ShadowMode.PoissonDisk) {
+      this.shadow = new PoissonDisk();
+    } else if (ShadowShader.mode === ShadowMode.StratifiedPoissonDisk) {
+      this.shadow = new StratifiedPoissonDisk();
     }
   }
 

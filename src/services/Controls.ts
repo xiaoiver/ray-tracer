@@ -32,8 +32,8 @@ interface IShadowControl {
     [ShadowMode.Lerp]: boolean,
     [ShadowMode.PCF]: boolean,
     [ShadowMode.PCFLerp]: boolean,
-    [ShadowMode.PoissionDisk]: boolean,
-    [ShadowMode.StratifiedPoissionDisk]: boolean
+    [ShadowMode.PoissonDisk]: boolean,
+    [ShadowMode.StratifiedPoissonDisk]: boolean
   }
 }
 
@@ -89,8 +89,8 @@ export default class Controls extends EventEmitter implements IControlsService {
         [ShadowMode.Lerp]: false,
         [ShadowMode.PCF]: false,
         [ShadowMode.PCFLerp]: false,
-        [ShadowMode.PoissionDisk]: false,
-        [ShadowMode.StratifiedPoissionDisk]: false
+        [ShadowMode.PoissonDisk]: false,
+        [ShadowMode.StratifiedPoissonDisk]: false
       }
     }
 
