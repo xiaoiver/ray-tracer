@@ -42,10 +42,18 @@ const controls = container.get<IControlsService>(SERVICE_IDENTIFIER.IControlsSer
 const textureLoader = container.get<ITextureLoaderService>(SERVICE_IDENTIFIER.ITextureLoaderService);
 
 const floorTexture = textureLoader.load('https://raw.githubusercontent.com/josdirksen/learning-threejs/master/assets/textures/general/floor-wood.jpg');
+const skyboxTexture = textureLoader.loadCubeMap([
+  `.${PUBLIC_PATH}static/images/miramar_right.png`,
+  `.${PUBLIC_PATH}static/images/miramar_left.png`,
+  `.${PUBLIC_PATH}static/images/miramar_top.png`,
+  `.${PUBLIC_PATH}static/images/miramar_bottom.png`,
+  `.${PUBLIC_PATH}static/images/miramar_front.png`,
+  `.${PUBLIC_PATH}static/images/miramar_back.png`,
+]);
 
 // Setup camera
 const { width, height } = canvas.getSize();
-camera.init($V([0, 10, 10]), $V([0.001, 0.001, 0.001]), 60, width / height, 1, 100);
+camera.init($V([0, 10, 10]), $V([0, 0, 0]), 60, width / height, 1, 100);
 
 // Setup meshes & lights in current scene
 scene.addMesh(new Mesh({
@@ -70,25 +78,28 @@ scene.addMesh(new Mesh({
 //     color: $V([1.0, 0.5, 0.0])
 //   })
 // }));
-// const cube = new Cube({
-//   color: $V([0.0, 0.5, 0.0]),
-//   center: $V([0, 1.5, 0]),
-//   width: 1,
-//   height: 1,
-//   depth: 1
-// });
-// scene.addMesh(new Mesh({
-//   geometry: cube
-// }));
+const cube = new Cube({
+  center: $V([0, 4, 0]),
+  width: 2,
+  height: 2,
+  depth: 2
+});
 scene.addMesh(new Mesh({
-  geometry: new Sphere({
-    center: $V([1.5, 1.5, 1.5]),
-    radius: 0.5
-  }),
+  geometry: cube,
   material: new Material({
-    color: $V([1.0, 0.5, 0.0])
+    color: $V([1.0, 0.5, 0.0]),
+    // texture: skyboxTexture
   })
 }));
+// scene.addMesh(new Mesh({
+//   geometry: new Sphere({
+//     center: $V([0, 1.5, 0]),
+//     radius: 0.5
+//   }),
+//   material: new Material({
+//     color: $V([1.0, 0.5, 0.0])
+//   })
+// }));
 
 // scene.addLight(new PointLight({
 //   position: $V([-5, 5, -5]),

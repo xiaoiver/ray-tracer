@@ -53,6 +53,8 @@ export default class Cube extends Geometry {
       16,17,18,  16,18,19,    // down
       20,21,22,  20,22,23     // back
     ]);
+
+    this.textureCoords = this.vertices.filter((v, i) => i % 3 !== 1).map(v => v / 2 + 0.5);
   }
 
   setModelMatrix() {

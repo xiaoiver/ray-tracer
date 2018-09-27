@@ -4,12 +4,18 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const base = require('./webpack.config.base');
 
+// const PUBLIC_PATH = '/';
+const PUBLIC_PATH = '/ray-tracer/';
+
 module.exports = merge(base, {
   mode: 'production',
   output: {
-    publicPath: '/ray-tracer/'
+    publicPath: PUBLIC_PATH
   },
   plugins: [
+    new webpack.DefinePlugin({
+      PUBLIC_PATH: JSON.stringify(PUBLIC_PATH),
+    }),
     new CleanWebpackPlugin(['docs']),
     new HtmlWebpackPlugin({
       template: 'src/index.html',

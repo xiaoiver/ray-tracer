@@ -25,5 +25,7 @@ declare global {
   export interface Array<T> {
     fill(value: T): Array<T>;
   }
+
+  const PUBLIC_PATH: string;
 }
 

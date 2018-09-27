@@ -42,7 +42,8 @@ export default class Shadow implements IShadow {
 
       float calcShadow(sampler2D depths, vec4 positionFromLight, vec3 lightDir, vec3 normal) {
         vec3 shadowCoord = (positionFromLight.xyz / positionFromLight.w) * 0.5 + 0.5;
-        float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+        // float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+        float bias = 0.0015;
         ${this.snippet.fragment.calculation}
       }
     `;
