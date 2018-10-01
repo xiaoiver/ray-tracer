@@ -51,18 +51,19 @@ const floorTexture = textureLoader.load(`${PUBLIC_PATH}static/images/floor-wood.
 //   `${PUBLIC_PATH}static/images/miramar_back.png`,
 //   `${PUBLIC_PATH}static/images/miramar_front.png`,
 // ]);
-const skyboxTexture = textureLoader.loadCubeMap([
-  `${PUBLIC_PATH}static/images/right.jpg`,
-  `${PUBLIC_PATH}static/images/left.jpg`,
-  `${PUBLIC_PATH}static/images/top.jpg`,
-  `${PUBLIC_PATH}static/images/bottom.jpg`,
-  `${PUBLIC_PATH}static/images/front.jpg`,
-  `${PUBLIC_PATH}static/images/back.jpg`,
-]);
+// const skyboxTexture = textureLoader.loadCubeMap([
+//   `${PUBLIC_PATH}static/images/right.jpg`,
+//   `${PUBLIC_PATH}static/images/left.jpg`,
+//   `${PUBLIC_PATH}static/images/top.jpg`,
+//   `${PUBLIC_PATH}static/images/bottom.jpg`,
+//   `${PUBLIC_PATH}static/images/back.jpg`,
+//   `${PUBLIC_PATH}static/images/front.jpg`,
+// ]);
 
 // Setup camera
 const { width, height } = canvas.getSize();
 camera.init($V([0, 5, 10]), $V([0, 0, 0]), 60, width / height, .1, 100);
+camera.dolly(-10);
 
 // Setup meshes & lights in current scene
 scene.addMesh(new Mesh({
@@ -162,7 +163,7 @@ scene.addLight(new SpotLight({
   })
 }));
 
-renderer.addShader(new SkyboxShader(canvas, scene, camera, skyboxTexture));
+// renderer.addShader(new SkyboxShader(canvas, scene, camera, skyboxTexture));
 renderer.addShader(new ShadowShader(canvas, scene, camera));
 renderer.addShader(new DisplayShader(canvas, scene, camera));
 
