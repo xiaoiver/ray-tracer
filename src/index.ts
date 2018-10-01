@@ -42,14 +42,14 @@ const camera = container.get<ICameraService>(SERVICE_IDENTIFIER.ICameraService);
 const controls = container.get<IControlsService>(SERVICE_IDENTIFIER.IControlsService);
 const textureLoader = container.get<ITextureLoaderService>(SERVICE_IDENTIFIER.ITextureLoaderService);
 
-const floorTexture = textureLoader.load(`.${PUBLIC_PATH}static/images/floor-wood.jpg`);
+const floorTexture = textureLoader.load(`${PUBLIC_PATH}static/images/floor-wood.jpg`);
 // const skyboxTexture = textureLoader.loadCubeMap([
-//   `.${PUBLIC_PATH}static/images/miramar_right.png`,
-//   `.${PUBLIC_PATH}static/images/miramar_left.png`,
-//   `.${PUBLIC_PATH}static/images/miramar_top.png`,
-//   `.${PUBLIC_PATH}static/images/miramar_bottom.png`,
-//   `.${PUBLIC_PATH}static/images/miramar_back.png`,
-//   `.${PUBLIC_PATH}static/images/miramar_front.png`,
+//   `${PUBLIC_PATH}static/images/miramar_right.png`,
+//   `${PUBLIC_PATH}static/images/miramar_left.png`,
+//   `${PUBLIC_PATH}static/images/miramar_top.png`,
+//   `${PUBLIC_PATH}static/images/miramar_bottom.png`,
+//   `${PUBLIC_PATH}static/images/miramar_back.png`,
+//   `${PUBLIC_PATH}static/images/miramar_front.png`,
 // ]);
 const skyboxTexture = textureLoader.loadCubeMap([
   `${PUBLIC_PATH}static/images/right.jpg`,
