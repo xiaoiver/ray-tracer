@@ -52,12 +52,12 @@ const floorTexture = textureLoader.load(`.${PUBLIC_PATH}static/images/floor-wood
 //   `.${PUBLIC_PATH}static/images/miramar_front.png`,
 // ]);
 const skyboxTexture = textureLoader.loadCubeMap([
-  `.${PUBLIC_PATH}static/images/right.jpg`,
-  `.${PUBLIC_PATH}static/images/left.jpg`,
-  `.${PUBLIC_PATH}static/images/top.jpg`,
-  `.${PUBLIC_PATH}static/images/bottom.jpg`,
-  `.${PUBLIC_PATH}static/images/front.jpg`,
-  `.${PUBLIC_PATH}static/images/back.jpg`,
+  `${PUBLIC_PATH}static/images/right.jpg`,
+  `${PUBLIC_PATH}static/images/left.jpg`,
+  `${PUBLIC_PATH}static/images/top.jpg`,
+  `${PUBLIC_PATH}static/images/bottom.jpg`,
+  `${PUBLIC_PATH}static/images/front.jpg`,
+  `${PUBLIC_PATH}static/images/back.jpg`,
 ]);
 
 // Setup camera
