@@ -16,11 +16,12 @@ import Sphere from './geometry/Sphere';
 import Cube from './geometry/Cube';
 import Plane from './geometry/Plane';
 import Triangle from './geometry/Triangle';
-// import DirectionalLight from './light/DirectionalLight';
+import DirectionalLight from './light/DirectionalLight';
 import PointLight from './light/PointLight';
 import SpotLight from './light/SpotLight';
 import DisplayShader from './shaders/DisplayShader';
 import ShadowShader from './shaders/ShadowShader';
+import SkyboxShader from './shaders/SkyboxShader';
 import LightModel from './light/models/LightModel';
 import Material from './material/Material';
 // import RayTracer from './shaders/RayTracer';
@@ -41,23 +42,32 @@ const camera = container.get<ICameraService>(SERVICE_IDENTIFIER.ICameraService);
 const controls = container.get<IControlsService>(SERVICE_IDENTIFIER.IControlsService);
 const textureLoader = container.get<ITextureLoaderService>(SERVICE_IDENTIFIER.ITextureLoaderService);
 
-const floorTexture = textureLoader.load('https://raw.githubusercontent.com/josdirksen/learning-threejs/master/assets/textures/general/floor-wood.jpg');
+const floorTexture = textureLoader.load(`.${PUBLIC_PATH}static/images/floor-wood.jpg`);
+// const skyboxTexture = textureLoader.loadCubeMap([
+//   `.${PUBLIC_PATH}static/images/miramar_right.png`,
+//   `.${PUBLIC_PATH}static/images/miramar_left.png`,
+//   `.${PUBLIC_PATH}static/images/miramar_top.png`,
+//   `.${PUBLIC_PATH}static/images/miramar_bottom.png`,
+//   `.${PUBLIC_PATH}static/images/miramar_back.png`,
+//   `.${PUBLIC_PATH}static/images/miramar_front.png`,
+// ]);
 const skyboxTexture = textureLoader.loadCubeMap([
-  `.${PUBLIC_PATH}static/images/miramar_right.png`,
-  `.${PUBLIC_PATH}static/images/miramar_left.png`,
-  `.${PUBLIC_PATH}static/images/miramar_top.png`,
-  `.${PUBLIC_PATH}static/images/miramar_bottom.png`,
-  `.${PUBLIC_PATH}static/images/miramar_front.png`,
-  `.${PUBLIC_PATH}static/images/miramar_back.png`,
+  `.${PUBLIC_PATH}static/images/right.jpg`,
+  `.${PUBLIC_PATH}static/images/left.jpg`,
+  `.${PUBLIC_PATH}static/images/top.jpg`,
+  `.${PUBLIC_PATH}static/images/bottom.jpg`,
+  `.${PUBLIC_PATH}static/images/front.jpg`,
+  `.${PUBLIC_PATH}static/images/back.jpg`,
 ]);
 
 // Setup camera
 const { width, height } = canvas.getSize();
-camera.init($V([0, 10, 10]), $V([0, 0, 0]), 60, width / height, 1, 100);
+camera.init($V([0, 5, 10]), $V([0, 0, 0]), 60, width / height, .1, 100);
 
 // Setup meshes & lights in current scene
 scene.addMesh(new Mesh({
   geometry: new Plane({
+    center: $V([0, 0, 0]),
     width: 10,
     height: 10
   }),
@@ -78,28 +88,28 @@ scene.addMesh(new Mesh({
 //     color: $V([1.0, 0.5, 0.0])
 //   })
 // }));
-const cube = new Cube({
-  center: $V([0, 4, 0]),
-  width: 2,
-  height: 2,
-  depth: 2
-});
-scene.addMesh(new Mesh({
-  geometry: cube,
-  material: new Material({
-    color: $V([1.0, 0.5, 0.0]),
-    // texture: skyboxTexture
-  })
-}));
+// const cube = new Cube({
+//   center: $V([2, 2, 0]),
+//   width: 1,
+//   height: 1,
+//   depth: 1
+// });
 // scene.addMesh(new Mesh({
-//   geometry: new Sphere({
-//     center: $V([0, 1.5, 0]),
-//     radius: 0.5
-//   }),
+//   geometry: cube,
 //   material: new Material({
-//     color: $V([1.0, 0.5, 0.0])
+//     color: $V([1.0, 0.5, 0.0]),
+//     // texture: skyboxTexture
 //   })
 // }));
+scene.addMesh(new Mesh({
+  geometry: new Sphere({
+    center: $V([0, 1, 0]),
+    radius: 0.5
+  }),
+  material: new Material({
+    color: $V([1.0, 0.5, 0.0])
+  })
+}));
 
 // scene.addLight(new PointLight({
 //   position: $V([-5, 5, -5]),
@@ -121,25 +131,25 @@ scene.addMesh(new Mesh({
 //     specular: $V([0.5, 0.5, 0.5])
 //   })
 // }));
+// scene.addLight(new SpotLight({
+//   position: $V([-2, 15, 0]),
+//   direction: $V([0, -1, 0]),
+//   angle: 14,
+//   exponent: 40,
+//   model: new LightModel({
+//     ambient: $V([0.2, 0.2, 0.2]),
+//     diffuse: $V([1, 1, 1]),
+//     specular: $V([1, 1, 1]),
+//     attenuation: {
+//       linear: 0.1,
+//       quadratic: 0.01
+//     }
+//   })
+// }));
 scene.addLight(new SpotLight({
-  position: $V([1, 15, 0]),
+  position: $V([0, 10, 0]),
   direction: $V([0, -1, 0]),
-  angle: 14,
-  exponent: 40,
-  model: new LightModel({
-    ambient: $V([0.2, 0.2, 0.2]),
-    diffuse: $V([1, 1, 1]),
-    specular: $V([1, 1, 1]),
-    attenuation: {
-      linear: 0.1,
-      quadratic: 0.01
-    }
-  })
-}));
-scene.addLight(new SpotLight({
-  position: $V([-1, 15, 0]),
-  direction: $V([0, -1, 0]),
-  angle: 14,
+  angle: 24,
   exponent: 40,
   model: new LightModel({
     ambient: $V([0.2, 0.2, 0.2]),
@@ -152,6 +162,7 @@ scene.addLight(new SpotLight({
   })
 }));
 
+renderer.addShader(new SkyboxShader(canvas, scene, camera, skyboxTexture));
 renderer.addShader(new ShadowShader(canvas, scene, camera));
 renderer.addShader(new DisplayShader(canvas, scene, camera));
 

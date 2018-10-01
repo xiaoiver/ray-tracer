@@ -37,7 +37,7 @@ export default class SpotLight extends ShadowLight {
       float exponent;
     };
 
-    vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+    vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, sampler2D shadowMap, vec4 positionFromLight)
     {
       vec3 lightDir = normalize(light.position - fragPos);
       // diffuse shading
@@ -64,8 +64,8 @@ export default class SpotLight extends ShadowLight {
         spotEffect = 0.0;
       }
 
-      float shadow = calcShadow(u_ShadowMap${this.index}, v_PositionFromLight${this.index}, lightDir, normal);
-      return ambient + attenuation * shadow * (spotEffect * diffuse + specular);
+      float shadowFactor = calcShadow(shadowMap, positionFromLight, lightDir, normal);
+      return ambient + attenuation * shadowFactor * (spotEffect * diffuse + specular);
     }
   `;
 

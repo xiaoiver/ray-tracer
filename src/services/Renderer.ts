@@ -60,6 +60,10 @@ export default class Renderer implements IRendererService {
   }
 
   render() {
+    const gl = this.gl;
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     this.shaders.forEach(shader => {
       if (!shader.inited) {
         shader.init(this.gl);

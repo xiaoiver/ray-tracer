@@ -11,7 +11,7 @@ export default class PoissonDisk extends Shadow {
       float PoissonDisk(sampler2D depths, vec2 uv, float compare, float bias){
         float result = 0.0;
         for (int i = 0; i < 4; i++) {
-          result += texture2DCompare(depths, uv + vec2(uPoissonDisk[i * 2], uPoissonDisk[i * 2 + 1])/700.0, compare, bias);
+          result += texture2DCompare(depths, uv + vec2(uPoissonDisk[i * 2], uPoissonDisk[i * 2 + 1])/2048.0, compare, bias);
         }
         return result / 4.0;
       }

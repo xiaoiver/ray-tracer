@@ -8,4 +8,5 @@ export const UNIFORM_SHADOW_LIGHT_MAP = 'u_ShadowMap';
 export const UNIFORM_DIRECTIONAL_LIGHT_DIRECTION = 'u_DirectionalLightDirection';
 export const UNIFORM_DIRECTIONAL_LIGHT_COLOR = 'u_DirectionalLightColor';
 
-export const DEFAULT_TEXTURE_ID = 3;
+export const DEFAULT_TEXTURE_ID = 1;
+export const DEFAULT_TEXTURE_CUBE_ID = 2;

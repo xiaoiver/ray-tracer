@@ -3,7 +3,7 @@ import SERVICE_IDENTIFIER from '../constants/services';
 import { IRendererService } from '../services/Renderer';
 import Texture from '../texture/Texture';
 import { isPowerOf2 } from '../utils/math';
-import { DEFAULT_TEXTURE_ID } from '../constants';
+import { DEFAULT_TEXTURE_ID, DEFAULT_TEXTURE_CUBE_ID } from '../constants';
 
 export interface ITextureLoaderService {
   load(url: string): Texture;
@@ -25,7 +25,7 @@ export default class TextureLoader implements ITextureLoaderService {
     // http://webglreport.com/?v=2
     this.maxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
 
-    this.currentId = DEFAULT_TEXTURE_ID;
+    this.currentId = DEFAULT_TEXTURE_CUBE_ID;
   }
 
   getId(): number {
@@ -39,10 +39,10 @@ export default class TextureLoader implements ITextureLoaderService {
     const gl = this.renderer.gl;
 
     let texture = new Texture();
-    texture.id = this.getId();
+    texture.id = DEFAULT_TEXTURE_ID;
     texture.texture = gl.createTexture();
     img.onload = () => {
-      texture.id++;
+      texture.id = this.getId();
       texture.img = img;
       // Flip the image's y axis
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
@@ -81,11 +81,10 @@ export default class TextureLoader implements ITextureLoaderService {
 		if (urls.length != 6) return null;
 
 		let texture = new Texture();
-    texture.id = DEFAULT_TEXTURE_ID;
+    texture.id = DEFAULT_TEXTURE_CUBE_ID;
     texture.texture = gl.createTexture();
 
     Promise.all(urls.map(url => new Promise((resolve, reject) => {
-      texture.id = this.getId();
       let img = new Image();
       img.onload = () =>  {
         resolve(img);
@@ -97,6 +96,8 @@ export default class TextureLoader implements ITextureLoaderService {
       img.crossOrigin = 'anonymous';
       img.src = url;
     }))).then((images: Array<HTMLImageElement>) => {
+      texture.id = this.getId();
+      gl.activeTexture((<any> gl)[`TEXTURE${texture.id}`]);
       gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture.texture);
 
       for (let i = 0; i < 6; i++) {
@@ -109,8 +110,9 @@ export default class TextureLoader implements ITextureLoaderService {
       gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       // only WebGL2 support TEXTURE_WRAP_R
       // gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+      // gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
 
-      gl.bindTexture(gl.TEXTURE_CUBE_MAP,null);
+      // gl.bindTexture(gl.TEXTURE_CUBE_MAP,null);
     });
     
 		return texture;

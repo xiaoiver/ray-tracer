@@ -21,6 +21,7 @@ import PCF from '../light/shadows/PCF';
 import PCFLerp from '../light/shadows/PCFLerp';
 import PoissonDisk from '../light/shadows/PoissonDisk';
 import StratifiedPoissonDisk from '../light/shadows/StratifiedPoissonDisk';
+import RotatedPoissonDisk from '../light/shadows/RotatedPoissonDisk';
 
 let defaultTextureCreated = false;
 
@@ -51,6 +52,8 @@ export default class DisplayShader extends Shader {
       this.shadow = new PoissonDisk();
     } else if (ShadowShader.mode === ShadowMode.StratifiedPoissonDisk) {
       this.shadow = new StratifiedPoissonDisk();
+    } else if (ShadowShader.mode === ShadowMode.RotatedPoissonDisk) {
+      this.shadow = new RotatedPoissonDisk();
     }
   }
 
@@ -71,25 +74,26 @@ export default class DisplayShader extends Shader {
     Object.keys(lightsInfo).forEach(type => {
       const {lights, varName, declaration} = lightsInfo[type];
       // Calculate shadow map for every light
-      lights.forEach(light => {
+      lights.forEach((light, i) => {
         if (light instanceof ShadowLight) {
           light.calculateShadow();
           vertexShadowDeclarations += light.shadowSnippet.vertex.declaration;
           vertexShadowCalculations += light.shadowSnippet.vertex.calculation;
           fragmentShadowDeclarations += light.shadowSnippet.fragment.declaration;
           fragmentShadowCalculations += light.shadowSnippet.fragment.calculation;
+          fragmentDisplayCalculations += `result += calc${type}(${varName}s[${i}], normal, v_Position, viewDir, u_ShadowMap${light.index}, v_PositionFromLight${light.index});`;
+        } else {
+          fragmentDisplayCalculations += `
+          for(int i = 0; i < ${lights.length}; i++) {
+            result += calc${type}(${varName}s[i], normal, v_Position, viewDir);
+          }
+        `;
         }
       });
 
       fragmentDisplayDeclarations += `
         ${declaration}
         uniform ${type} ${varName}s[${lights.length}];
-      `;
-      // Calculate lights
-      fragmentDisplayCalculations += `
-        for(int i = 0; i < ${lights.length}; i++) {
-          result += calc${type}(${varName}s[i], normal, v_Position, viewDir);
-        }
       `;
     });
 
@@ -201,8 +205,8 @@ export default class DisplayShader extends Shader {
     const {width, height} = canvas.getSize();
     
     gl.viewport(0, 0, width, height);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.useProgram(program);
+
+    this.activate();
     // gl.cullFace(gl.BACK);
 
     // Setup camera uniforms

@@ -10,6 +10,7 @@ import { ISceneService } from '../services/Scene';
 import { IControlsService } from '../services/Controls';
 import DirectionalLight from '../light/DirectionalLight';
 import { setVertexAttribute, setUniforms } from '../utils/gl';
+import SpotLight from '../light/SpotLight';
 
 export const OFFSCREEN_WIDTH = 2048;
 export const OFFSCREEN_HEIGHT = 2048;
@@ -20,8 +21,9 @@ export enum ShadowMode {
   Lerp = 'lerp',
   PCF = 'pcf',
   PCFLerp = 'pcf-lerp',
-  PoissonDisk = 'poission-disk',
-  StratifiedPoissonDisk = 'stratified-poission-disk'
+  PoissonDisk = 'poisson-disk',
+  StratifiedPoissonDisk = 'stratified-poisson-disk',
+  RotatedPoissonDisk = 'rotated-poisson-disk',
   // VSM = 'variance-shadow-mapping'
 }
 
@@ -85,7 +87,8 @@ export default class ShadowShader extends Shader {
       || ShadowShader.mode === ShadowMode.PCF
       || ShadowShader.mode === ShadowMode.PCFLerp
       || ShadowShader.mode === ShadowMode.PoissonDisk
-      || ShadowShader.mode === ShadowMode.StratifiedPoissonDisk) {
+      || ShadowShader.mode === ShadowMode.StratifiedPoissonDisk
+      || ShadowShader.mode === ShadowMode.RotatedPoissonDisk) {
       fragmentShader = `
         precision mediump float;
         void main() {
@@ -120,7 +123,7 @@ export default class ShadowShader extends Shader {
 
   draw() {
     const {gl, program} = this;
-    gl.useProgram(this.program);
+    this.activate();
     // gl.cullFace(gl.FRONT);
     
     let projectionMatrix: Matrix;
@@ -145,14 +148,14 @@ export default class ShadowShader extends Shader {
           gl.bindTexture(gl.TEXTURE_2D, light.fbo.texture);
 
           if (light instanceof DirectionalLight) {
-            lightPosition = light.direction.x(-10).subtract(this.camera.center);
-            projectionMatrix = this.camera.ortho(-10, 10, -10, 10, this.camera.znear, this.camera.zfar);
-          } else {
-            lightPosition = light.position;
-            projectionMatrix = this.camera.perspective(this.camera.fovy, OFFSCREEN_WIDTH/OFFSCREEN_HEIGHT, this.camera.znear, this.camera.zfar);
+            lightPosition = light.direction.x(-10);
+            projectionMatrix = this.camera.ortho(-10, 10, -10, 10, 1, 100);
+            viewMatrix = this.camera.lookAt(lightPosition, light.direction, this.camera.up);
+          } else if (light instanceof SpotLight) {
+            projectionMatrix = this.camera.perspective(this.camera.fovy, OFFSCREEN_WIDTH/OFFSCREEN_HEIGHT, 1, 100);
+            // viewMatrix = this.camera.lookAt(light.position, light.direction, $V([0, 1, 0]));
+            viewMatrix = this.camera.lookAt(light.position, $V([0.01, 0, 0]), $V([0, 1, 0]));
           }
-
-          viewMatrix = this.camera.lookAt(lightPosition, this.camera.center, this.camera.up);
 
           this.scene.meshes.forEach(mesh => {
             const {vertices, modelMatrix} = mesh.geometry;

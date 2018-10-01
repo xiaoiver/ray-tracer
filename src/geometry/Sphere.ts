@@ -21,7 +21,7 @@ export default class Sphere extends Geometry {
   }
 
   setVertices() {
-    const SPHERE_DIV = 13;
+    const SPHERE_DIV = 23;
 
     let i, ai, si, ci;
     let j, aj, sj, cj;

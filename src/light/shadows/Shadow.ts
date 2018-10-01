@@ -27,11 +27,12 @@ export default class Shadow implements IShadow {
       }
 
       float texture2DShadowLerp(sampler2D depths, vec2 uv, float compare, float bias){
-        vec2 f = fract(uv);
-        float lb = texture2DCompare(depths, uv + texelSize * vec2(0.0, 0.0), compare, bias);
-        float lt = texture2DCompare(depths, uv + texelSize * vec2(0.0, 1.0), compare, bias);
-        float rb = texture2DCompare(depths, uv + texelSize * vec2(1.0, 0.0), compare, bias);
-        float rt = texture2DCompare(depths, uv + texelSize * vec2(1.0, 1.0), compare, bias);
+        vec2 centroidUV = floor(uv * ${OFFSCREEN_WIDTH.toFixed(5)} + 0.5) / ${OFFSCREEN_WIDTH.toFixed(5)};
+        vec2 f = fract(uv * ${OFFSCREEN_WIDTH.toFixed(5)} + 0.5);
+        float lb = texture2DCompare(depths, centroidUV + texelSize * vec2(0.0, 0.0), compare, bias);
+        float lt = texture2DCompare(depths, centroidUV + texelSize * vec2(0.0, 1.0), compare, bias);
+        float rb = texture2DCompare(depths, centroidUV + texelSize * vec2(1.0, 0.0), compare, bias);
+        float rt = texture2DCompare(depths, centroidUV + texelSize * vec2(1.0, 1.0), compare, bias);
         float a = mix(lb, lt, f.y);
         float b = mix(rb, rt, f.y);
         float c = mix(a, b, f.x);
@@ -42,8 +43,7 @@ export default class Shadow implements IShadow {
 
       float calcShadow(sampler2D depths, vec4 positionFromLight, vec3 lightDir, vec3 normal) {
         vec3 shadowCoord = (positionFromLight.xyz / positionFromLight.w) * 0.5 + 0.5;
-        // float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-        float bias = 0.0015;
+        float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
         ${this.snippet.fragment.calculation}
       }
     `;

@@ -13,6 +13,8 @@ export interface IShader {
   program?: WebGLProgram;
   inited: boolean;
   init(gl: WebGLRenderingContext): void;
+  activate(): void;
+  deactivate(): void;
 }
 
 @injectable()
@@ -118,5 +120,13 @@ export default abstract class Shader implements IShader {
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
   
     return {framebuffer, texture};
+  }
+
+  activate() {
+    this.gl.useProgram(this.program);
+  }
+
+	deactivate() {
+    this.gl.useProgram(null);
   }
 }

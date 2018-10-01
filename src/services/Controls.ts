@@ -33,7 +33,8 @@ interface IShadowControl {
     [ShadowMode.PCF]: boolean,
     [ShadowMode.PCFLerp]: boolean,
     [ShadowMode.PoissonDisk]: boolean,
-    [ShadowMode.StratifiedPoissonDisk]: boolean
+    [ShadowMode.StratifiedPoissonDisk]: boolean,
+    [ShadowMode.RotatedPoissonDisk]: boolean
   }
 }
 
@@ -90,7 +91,8 @@ export default class Controls extends EventEmitter implements IControlsService {
         [ShadowMode.PCF]: false,
         [ShadowMode.PCFLerp]: false,
         [ShadowMode.PoissonDisk]: false,
-        [ShadowMode.StratifiedPoissonDisk]: false
+        [ShadowMode.StratifiedPoissonDisk]: false,
+        [ShadowMode.RotatedPoissonDisk]: false
       }
     }
 
@@ -137,12 +139,12 @@ export default class Controls extends EventEmitter implements IControlsService {
     const {isTruck, moveSpeed} = this.cameraController;
   
     if (isTruck) {
-      this.camera.truck(-deltaX * 0.01 * moveSpeed);
-      this.camera.pedestal(deltaY * 0.01 * moveSpeed);
-      this.camera.dolly(deltaZ * 0.05 * moveSpeed);
-    } else {
       this.camera.pan(deltaX * 0.001 * moveSpeed);
       this.camera.tilt(deltaY * 0.001 * moveSpeed);
+      this.camera.dolly(deltaZ * 0.05 * moveSpeed);
+    } else {
+      this.camera.truck(-deltaX * 0.01 * moveSpeed);
+      this.camera.pedestal(deltaY * 0.01 * moveSpeed);
       this.camera.cant(deltaZ * 0.05 * moveSpeed);
     }
   }
