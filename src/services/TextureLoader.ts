@@ -20,15 +20,13 @@ export default class TextureLoader implements ITextureLoaderService {
     @inject(SERVICE_IDENTIFIER.IRendererService) _renderer: IRendererService
   ) {
     this.renderer = _renderer;
-
-    const gl = this.renderer.gl;
-    // http://webglreport.com/?v=2
-    this.maxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-
     this.currentId = DEFAULT_TEXTURE_CUBE_ID;
   }
 
   getId(): number {
+    const gl = this.renderer.gl;
+    // http://webglreport.com/?v=2
+    this.maxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
     if (this.currentId < this.maxTextures) {
       return this.currentId++;
     }

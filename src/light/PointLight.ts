@@ -1,6 +1,5 @@
 import { Light, LightOptions } from './Light';
 import { UNIFORM_POINT_LIGHT_COLOR, UNIFORM_POINT_LIGHT_POSITION } from '../constants/index';
-import Shader from '../shaders/Shader';
 import ShadowLight from './ShadowLight';
 import { setUniforms } from '../utils/gl';
 

@@ -1,5 +1,5 @@
 import { Light, LightOptions } from './Light';
-import Shader, {FBO} from '../shaders/Shader';
+import { FBO } from '../shaders/BaseShader';
 import { IShaderSnippet } from '../shaders/ShaderSnippet';
 import { setUniforms } from '../utils/gl';
 

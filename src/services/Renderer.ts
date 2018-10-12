@@ -1,51 +1,92 @@
 import { injectable, inject } from 'inversify';
+import { EventEmitter } from 'eventemitter3';
+import * as Stats from 'stats.js';
+import createGLShell, { GameShell } from 'gl-now';
 import { Matrix } from 'sylvester';
 
 import SERVICE_IDENTIFIER from '../constants/services';
 import { getWebGLContext } from '../utils/gl';
 
 import { ISceneService } from './Scene';
-import { ICanvasService } from './Canvas';
-import Shader from '../shaders/Shader';
+import BaseShader from '../shaders/BaseShader';
 
 export interface IRendererService {
   gl: WebGLRenderingContext;
+  canvas: HTMLCanvasElement;
 
-  render(): void;
-  addShader(shader: Shader): void;
+  getSize(): { width: number, height: number };
+  addShader(shader: BaseShader): void;
   updateShaders(): void;
   updateScene(): void;
+  on(name: string, cb: Function): void;
 }
 
 @injectable()
-export default class Renderer implements IRendererService {
-  private canvas: ICanvasService;
+export default class Renderer extends EventEmitter implements IRendererService {
+  static RESIZE_EVENT = 'resize';
+  static READY_EVENT = 'ready';
+
   private scene: ISceneService;
 
-  private shaders: Array<Shader> = [];
-  private clearColor: Vector = $V([0,0,0]);
+  private shell: GameShell;
+  private stats: Stats;
+  private shaders: Array<BaseShader> = [];
+  private height: number;
+  private width: number;
 
   gl: WebGLRenderingContext;
+  canvas: HTMLCanvasElement;
 
   constructor(
-    @inject(SERVICE_IDENTIFIER.ICanvasService) _canvas: ICanvasService,
     @inject(SERVICE_IDENTIFIER.ISceneService) _scene: ISceneService
   ) {
-    this.canvas = _canvas;
+    super();
     this.scene = _scene;
 
-    const gl = <WebGLRenderingContext> getWebGLContext(this.canvas.el);
-    this.gl = gl;
-    if (!gl) {
-      console.log('Failed to get the rendering context for WebGL.');
-      return;
-    }
-    this.gl.clearColor(this.clearColor.e(1), this.clearColor.e(2), this.clearColor.e(3), 1.0);
-    this.gl.enable(gl.DEPTH_TEST);
-    this.gl.enable(gl.CULL_FACE);
+    this.shell = createGLShell({
+      clearColor: [0, 0, 0, 1]
+    });
+    this.shell.on('gl-init', () => {
+      const {canvas, gl} = this.shell;
+      this.gl = gl;
+      gl.enable(gl.DEPTH_TEST);
+      gl.enable(gl.CULL_FACE);
+      this.canvas = canvas;
+      this.initStats();
+      this.emit(Renderer.READY_EVENT);
+    });
+    
+    this.shell.on('gl-render', () => {
+      this.stats.update();
+      const {canvas, gl} = this.shell;
+
+      this.shaders.forEach(shader => {
+        if (!shader.inited) {
+          shader.init(this.gl);
+        }
+      });
+  
+      if (!this.scene.inited) {
+        this.scene.init();
+      }
+  
+      this.shaders.forEach(shader => {
+        shader.draw();
+      });
+    });
+
+    this.shell.on('gl-resize', (width: number, height: number) => {
+      this.width = width;
+      this.height = height;
+      this.emit(Renderer.RESIZE_EVENT);
+    });
+
+    this.shell.on('gl-error', (reason: string) => {
+      console.error(reason);
+    });
   }
 
-  addShader(shader: Shader) {
+  addShader(shader: BaseShader) {
     this.shaders.push(shader);
   }
 
@@ -59,23 +100,20 @@ export default class Renderer implements IRendererService {
     this.scene.inited = false;
   }
 
-  render() {
-    const gl = this.gl;
+  initStats() {
+    this.stats = new Stats();
+    this.stats.showPanel(0);
+    const $stats = this.stats.dom;
+    $stats.style.position = 'absolute';
+    $stats.style.left = '0px';
+    $stats.style.top = '0px';
+    document.getElementById('stats').appendChild($stats);
+  }
 
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    this.shaders.forEach(shader => {
-      if (!shader.inited) {
-        shader.init(this.gl);
-      }
-    });
-
-    if (!this.scene.inited) {
-      this.scene.init();
-    }
-
-    this.shaders.forEach(shader => {
-      shader.draw();
-    });
+  getSize(): { width: number, height: number } {
+    return {
+      width: this.width,
+      height: this.height
+    };
   }
 }

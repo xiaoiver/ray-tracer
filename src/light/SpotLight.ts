@@ -5,7 +5,6 @@ import {
   UNIFORM_SPOT_LIGHT_POSITION,
   UNIFORM_SPOT_LIGHT_DIRECTION
 } from '../constants/index';
-import Shader from '../shaders/Shader';
 import { setUniforms } from '../utils/gl';
 
 interface SpotLightOptions extends LightOptions {

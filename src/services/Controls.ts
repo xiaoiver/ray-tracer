@@ -5,9 +5,8 @@ import { injectable, inject } from 'inversify';
 import SERVICE_IDENTIFIER from '../constants/services';
 import { ISceneService } from '../services/Scene';
 import { ICameraService } from '../services/Camera';
-import { IRendererService } from '../services/Renderer';
+import Renderer, { IRendererService } from '../services/Renderer';
 import Mouse, { IMouseService, MouseData } from '../services/Mouse';
-import Canvas, { ICanvasService } from '../services/Canvas';
 
 import SpotLight from '../light/SpotLight';
 import ShadowLight from '../light/ShadowLight';
@@ -34,7 +33,8 @@ interface IShadowControl {
     [ShadowMode.PCFLerp]: boolean,
     [ShadowMode.PoissonDisk]: boolean,
     [ShadowMode.StratifiedPoissonDisk]: boolean,
-    [ShadowMode.RotatedPoissonDisk]: boolean
+    [ShadowMode.RotatedPoissonDisk]: boolean,
+    [ShadowMode.VSM]: boolean
   }
 }
 
@@ -49,7 +49,6 @@ export default class Controls extends EventEmitter implements IControlsService {
   private scene: ISceneService;
   private camera: ICameraService;
   private mouse: IMouseService;
-  private canvas: ICanvasService;
   private renderer: IRendererService;
 
   cameraController: ICameraControl;
@@ -59,7 +58,6 @@ export default class Controls extends EventEmitter implements IControlsService {
   constructor(
     @inject(SERVICE_IDENTIFIER.ICameraService) _camera: ICameraService,
     @inject(SERVICE_IDENTIFIER.IMouseService) _mouse: IMouseService,
-    @inject(SERVICE_IDENTIFIER.ICanvasService) _canvas: ICanvasService,
     @inject(SERVICE_IDENTIFIER.ISceneService) _scene: ISceneService,
     @inject(SERVICE_IDENTIFIER.IRendererService) _renderer: IRendererService
   ) {
@@ -67,7 +65,6 @@ export default class Controls extends EventEmitter implements IControlsService {
 
     this.scene = _scene;
     this.camera = _camera;
-    this.canvas = _canvas;
     this.mouse = _mouse;
     this.renderer = _renderer;
 
@@ -92,7 +89,8 @@ export default class Controls extends EventEmitter implements IControlsService {
         [ShadowMode.PCFLerp]: false,
         [ShadowMode.PoissonDisk]: false,
         [ShadowMode.StratifiedPoissonDisk]: false,
-        [ShadowMode.RotatedPoissonDisk]: false
+        [ShadowMode.RotatedPoissonDisk]: false,
+        [ShadowMode.VSM]: false
       }
     }
 
@@ -114,7 +112,7 @@ export default class Controls extends EventEmitter implements IControlsService {
     this.onMousemove = this.onMousemove.bind(this);
     this.onMousewheel = this.onMousewheel.bind(this);
 
-    this.canvas.on(Canvas.RESIZE_EVENT, this.onResize);
+    this.renderer.on(Renderer.RESIZE_EVENT, this.onResize);
     this.mouse.on(Mouse.MOVE_EVENT, this.onMousemove);
     this.mouse.on(Mouse.WHEEL_EVENT, this.onMousewheel);
   }
@@ -128,10 +126,12 @@ export default class Controls extends EventEmitter implements IControlsService {
   }
 
   onResize() {
-    const {width, height} = this.canvas.getSize();
-    this.camera.aspect = width / height;
-    this.camera.updateProjection();
-    this.camera.updateTransform();
+    const {width, height} = this.renderer.getSize();
+    if (this.camera.eye) {
+      this.camera.aspect = width / height;
+      this.camera.updateProjection();
+      this.camera.updateTransform();
+    }
   }
 
   moveCamera(data: MouseData) {

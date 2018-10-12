@@ -1,11 +1,11 @@
 import { injectable, inject } from 'inversify';
 import { Matrix } from 'sylvester';
-import Shader, { FBO } from './Shader';
+import BaseShader, { FBO } from './BaseShader';
 import { Light } from '../light/Light';
 import ShadowLight from '../light/ShadowLight';
 import SERVICE_IDENTIFIER from '../constants/services';
 import { ICameraService } from '../services/Camera';
-import { ICanvasService } from '../services/Canvas';
+import { IRendererService } from '../services/Renderer';
 import { ISceneService } from '../services/Scene';
 import { IControlsService } from '../services/Controls';
 import DirectionalLight from '../light/DirectionalLight';
@@ -24,20 +24,20 @@ export enum ShadowMode {
   PoissonDisk = 'poisson-disk',
   StratifiedPoissonDisk = 'stratified-poisson-disk',
   RotatedPoissonDisk = 'rotated-poisson-disk',
-  // VSM = 'variance-shadow-mapping'
+  VSM = 'variance-shadow-mapping'
 }
 
 @injectable()
-export default class ShadowShader extends Shader {
+export default class ShadowShader extends BaseShader {
 
   static mode: ShadowMode = ShadowMode.HighPrecision;
 
   constructor(
-    @inject(SERVICE_IDENTIFIER.ICanvasService) canvas: ICanvasService,
+    @inject(SERVICE_IDENTIFIER.IRendererService) renderer: IRendererService,
     @inject(SERVICE_IDENTIFIER.ISceneService) scene: ISceneService,
     @inject(SERVICE_IDENTIFIER.ICameraService) camera: ICameraService
   ) {
-    super(canvas, scene, camera);
+    super(renderer, scene, camera);
   }
 
   generateShaders() {
@@ -99,20 +99,42 @@ export default class ShadowShader extends Shader {
           gl_FragColor = rgbaDepth;
         }
       `;
-    // } else if (ShadowShader.mode === ShadowMode.VSM) {
-    //   vertexShader = `
+    } else if (ShadowShader.mode === ShadowMode.VSM) {
+      gl.getExtension('OES_standard_derivatives');
+      vertexShader = `
+        attribute vec4 a_Position;
+        uniform mat4 u_MvpMatrix;
+        // uniform mat4 u_ModelMatrix;
+        varying vec4 v_Position;
+        void main() {
+          gl_Position = u_MvpMatrix * a_Position;
+          v_Position = gl_Position;
+        }
+      `;
+      fragmentShader = `
+        #extension GL_OES_standard_derivatives : enable
+        precision mediump float;
+        varying vec4 v_Position;
 
-    //   `;
-    //   fragmentShader = `
-    //     precision mediump float;
-    //     void main(){
-    //       vec3 lightPos = (lightView * vWorldPosition).xyz;
-    //       float depth = clamp(length(lightPos)/40.0, 0.0, 1.0);
-    //       float dx = dFdx(depth);
-    //       float dy = dFdy(depth);
-    //       gl_FragColor = vec4(depth, pow(depth, 2.0) + 0.25*(dx*dx + dy*dy), 0.0, 1.0);
-    //     }
-    //   `;
+        vec2 packHalf(float depth) { 
+          vec2 bitOffset = vec2(1.0 / 255., 0.);
+          vec2 color = vec2(depth, fract(depth * 255.));
+        
+          return color - (color.yy * bitOffset);
+        }
+
+        void main(){
+          float depth = gl_FragCoord.z;
+          // float depth = v_Position.z / v_Position.w;
+          // depth = depth * 0.5 + 0.5;
+          float moment1 = depth;
+          float moment2 = moment1 * moment1;
+          float dx = dFdx(depth);
+          float dy = dFdy(depth);
+          moment2 += 0.25 * (dx * dx + dy * dy);
+          gl_FragColor = vec4(packHalf(moment1), packHalf(moment2));
+        }
+      `;
     }
 
     return {
@@ -122,9 +144,9 @@ export default class ShadowShader extends Shader {
   }
 
   draw() {
-    const {gl, program} = this;
+    const {gl, shader: {program}} = this;
     this.activate();
-    // gl.cullFace(gl.FRONT);
+    // gl.cullFace(gl.BACK);
     
     let projectionMatrix: Matrix;
     let viewMatrix: Matrix;
@@ -165,7 +187,8 @@ export default class ShadowShader extends Shader {
             mesh.mvpMatrixFromLight[`${light.index}`] = mvpMatrixFromLight;
       
             setUniforms(gl, program, {
-              'u_MvpMatrix': mvpMatrixFromLight
+              'u_MvpMatrix': mvpMatrixFromLight,
+              // 'u_ModelMatrix': modelMatrix
             });
       
             if (!setVertexAttribute(gl, program, 'a_Position', vertices, 3, gl.FLOAT)) return -1;

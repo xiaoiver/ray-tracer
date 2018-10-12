@@ -35,6 +35,10 @@
   "dependencies": {
     "dat.gui": "^0.7.2",
     "eventemitter3": "^3.1.0",
+    "gl-fbo": "^2.0.5",
+    "gl-now": "^1.4.0",
+    "gl-shader": "^4.2.1",
+    "glslify": "^6.3.1",
     "hammerjs": "^2.0.8",
     "inversify": "^4.13.0",
     "lodash.assign": "^4.2.0",

@@ -3,9 +3,9 @@ import { Matrix, Vector } from 'sylvester';
 import SERVICE_IDENTIFIER from '../constants/services';
 import { IShaderSnippet } from './ShaderSnippet';
 import { ICameraService } from '../services/Camera';
-import { ICanvasService } from '../services/Canvas';
+import { IRendererService } from '../services/Renderer';
 import { ISceneService } from '../services/Scene';
-import Shader from './Shader';
+import BaseShader from './BaseShader';
 import Texture from '../texture/Texture';
 import Cube from '../geometry/Cube';
 import { setVertexAttribute, setUniforms } from '../utils/gl';
@@ -13,17 +13,17 @@ import { setVertexAttribute, setUniforms } from '../utils/gl';
 let defaultTextureCreated = false;
 
 @injectable()
-export default class SkyboxShader extends Shader {
+export default class SkyboxShader extends BaseShader {
   private texture: Texture;
   private cube: Cube;
 
   constructor(
-    @inject(SERVICE_IDENTIFIER.ICanvasService) canvas: ICanvasService,
+    @inject(SERVICE_IDENTIFIER.IRendererService) renderer: IRendererService,
     @inject(SERVICE_IDENTIFIER.ISceneService) scene: ISceneService,
     @inject(SERVICE_IDENTIFIER.ICameraService) camera: ICameraService,
     texture: Texture
   ) {
-    super(canvas, scene, camera);
+    super(renderer, scene, camera);
 
     this.texture = texture;
 
@@ -61,7 +61,7 @@ export default class SkyboxShader extends Shader {
   }
 
   setupTexture() {
-    const {gl, program, texture, cube} = this;
+    const {gl, shader: {program}, texture, cube} = this;
 
     // https://stackoverflow.com/questions/35151452/check-if-webgl-texture-is-loaded-in-fragment-shader
     if (!defaultTextureCreated) {
@@ -86,8 +86,8 @@ export default class SkyboxShader extends Shader {
   }
 
   draw() {
-    const {gl, program, canvas} = this;
-    const {width, height} = canvas.getSize();
+    const {gl, shader: {program}, renderer} = this;
+    const {width, height} = renderer.getSize();
 
     this.activate();
 

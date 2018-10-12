@@ -3,9 +3,9 @@ import { Matrix, Vector } from 'sylvester';
 import SERVICE_IDENTIFIER from '../constants/services';
 import { IShaderSnippet } from './ShaderSnippet';
 import { ICameraService } from '../services/Camera';
-import { ICanvasService } from '../services/Canvas';
+import { IRendererService } from '../services/Renderer';
 import { ISceneService } from '../services/Scene';
-import Shader from './Shader';
+import Shader from './BaseShader';
 import { IShadow } from '../light/shadows/Shadow';
 import HighPrecision from '../light/shadows/HighPrecision';
 import ShadowShader, { ShadowMode } from './ShadowShader';
@@ -22,6 +22,7 @@ import PCFLerp from '../light/shadows/PCFLerp';
 import PoissonDisk from '../light/shadows/PoissonDisk';
 import StratifiedPoissonDisk from '../light/shadows/StratifiedPoissonDisk';
 import RotatedPoissonDisk from '../light/shadows/RotatedPoissonDisk';
+import VSM from '../light/shadows/VSM';
 
 let defaultTextureCreated = false;
 
@@ -30,11 +31,11 @@ export default class DisplayShader extends Shader {
   shadow: IShadow = new HighPrecision();
 
   constructor(
-    @inject(SERVICE_IDENTIFIER.ICanvasService) canvas: ICanvasService,
+    @inject(SERVICE_IDENTIFIER.IRendererService) renderer: IRendererService,
     @inject(SERVICE_IDENTIFIER.ISceneService) scene: ISceneService,
     @inject(SERVICE_IDENTIFIER.ICameraService) camera: ICameraService
   ) {
-    super(canvas, scene, camera);
+    super(renderer, scene, camera);
   }
 
   initShadow() {
@@ -54,6 +55,8 @@ export default class DisplayShader extends Shader {
       this.shadow = new StratifiedPoissonDisk();
     } else if (ShadowShader.mode === ShadowMode.RotatedPoissonDisk) {
       this.shadow = new RotatedPoissonDisk();
+    } else if (ShadowShader.mode === ShadowMode.VSM) {
+      this.shadow = new VSM();
     }
   }
 
@@ -166,7 +169,7 @@ export default class DisplayShader extends Shader {
   }
 
   setupTexture(texture: Texture, textureCoords: Float32Array) {
-    const {gl, program} = this;
+    const {gl, shader: {program}} = this;
     // https://stackoverflow.com/questions/35151452/check-if-webgl-texture-is-loaded-in-fragment-shader
     if (!defaultTextureCreated) {
       const defaultTexture = gl.createTexture();
@@ -184,7 +187,7 @@ export default class DisplayShader extends Shader {
   }
 
   setupLights(mvpMatrixFromLight: LightMatrixMap) {
-    const {gl, program} = this;
+    const {gl, shader: {program}} = this;
     const lightsInfo = this.scene.getLightsInfo();
     Object.keys(lightsInfo).forEach(type => {
       const {lights, varName} = lightsInfo[type];
@@ -201,8 +204,8 @@ export default class DisplayShader extends Shader {
   }
 
   draw() {
-    const {gl, program, canvas} = this;
-    const {width, height} = canvas.getSize();
+    const {gl, shader: {program}, renderer} = this;
+    const {width, height} = renderer.getSize();
     
     gl.viewport(0, 0, width, height);
 

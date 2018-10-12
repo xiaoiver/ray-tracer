@@ -1,7 +1,6 @@
 import ShadowLight from './ShadowLight';
 import { Light, LightOptions } from './Light';
 import { UNIFORM_DIRECTIONAL_LIGHT_COLOR, UNIFORM_DIRECTIONAL_LIGHT_DIRECTION } from '../constants';
-import Shader from '../shaders/Shader';
 import { setUniforms } from '../utils/gl';
 
 interface DirectionalLightOptions extends LightOptions {

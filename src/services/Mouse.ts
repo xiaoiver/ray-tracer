@@ -1,6 +1,6 @@
 import { injectable, inject } from 'inversify';
 import { EventEmitter } from 'eventemitter3';
-import Canvas, { ICanvasService } from './Canvas';
+import Renderer, { IRendererService } from './Renderer';
 import SERVICE_IDENTIFIER from '../constants/services';
 import * as Hammer from 'hammerjs';
 
@@ -16,7 +16,7 @@ export interface MouseData {
 
 @injectable()
 export default class Mouse extends EventEmitter implements IMouseService {
-  private canvas: ICanvasService;
+  private renderer: IRendererService;
 
   private isMoving: boolean = false;
   private lastX: number = -1;
@@ -32,26 +32,28 @@ export default class Mouse extends EventEmitter implements IMouseService {
   static WHEEL_EVENT = 'mousewheel';
 
   constructor(
-    @inject(SERVICE_IDENTIFIER.ICanvasService) _canvas: ICanvasService
+    @inject(SERVICE_IDENTIFIER.IRendererService) _renderer: IRendererService
   ) {
     super();
-    this.canvas = _canvas;
+    this.renderer = _renderer;
     this.onPanstart = this.onPanstart.bind(this);
     this.onPanmove = this.onPanmove.bind(this);
     this.onPanend = this.onPanend.bind(this);
     this.onPinch = this.onPinch.bind(this);
     this.onMousewheel = this.onMousewheel.bind(this);
 
-    const hammertime = new Hammer(this.canvas.el);
-    hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL });
-    hammertime.get('pinch').set({ enable: true });
-
-    hammertime.on('panstart', this.onPanstart);
-    hammertime.on('panmove', this.onPanmove);
-    hammertime.on('panend', this.onPanend);
-    hammertime.on('pinch', this.onPinch);
-    
-    this.canvas.el.addEventListener('wheel', this.onMousewheel)
+    this.renderer.on(Renderer.READY_EVENT, () => {
+      const hammertime = new Hammer(this.renderer.canvas);
+      hammertime.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+      hammertime.get('pinch').set({ enable: true });
+  
+      hammertime.on('panstart', this.onPanstart);
+      hammertime.on('panmove', this.onPanmove);
+      hammertime.on('panend', this.onPanend);
+      hammertime.on('pinch', this.onPinch);
+      
+      this.renderer.canvas.addEventListener('wheel', this.onMousewheel);
+    });
   }
 
   onPanend(e: HammerInput) {

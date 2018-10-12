@@ -1,16 +1,16 @@
 import { injectable, inject } from 'inversify';
 import { Matrix, Vector } from 'sylvester';
+import createShader, { Shader } from 'gl-shader';
 import { initShaders, setUniforms } from '../utils/gl';
 import SERVICE_IDENTIFIER from '../constants/services';
+import { IRendererService } from '../services/Renderer';
 import { ICameraService } from '../services/Camera';
-import { ICanvasService } from '../services/Canvas';
 import { ISceneService } from '../services/Scene';
 
 export interface FBO {framebuffer: WebGLFramebuffer, texture: WebGLTexture};
 
 export interface IShader {
   gl: WebGLRenderingContext;
-  program?: WebGLProgram;
   inited: boolean;
   init(gl: WebGLRenderingContext): void;
   activate(): void;
@@ -18,21 +18,21 @@ export interface IShader {
 }
 
 @injectable()
-export default abstract class Shader implements IShader {
-  canvas: ICanvasService;
+export default abstract class BaseShader implements IShader {
+  renderer: IRendererService;
   scene: ISceneService;
   camera: ICameraService;
 
   inited: boolean = false;
+  shader: Shader;
   gl: WebGLRenderingContext;
-  program: WebGLProgram;
 
   constructor(
-    @inject(SERVICE_IDENTIFIER.ICanvasService) _canvas: ICanvasService,
+    @inject(SERVICE_IDENTIFIER.IRendererService) _renderer: IRendererService,
     @inject(SERVICE_IDENTIFIER.ISceneService) _scene: ISceneService,
     @inject(SERVICE_IDENTIFIER.ICameraService) _camera: ICameraService
   ) {
-    this.canvas = _canvas;
+    this.renderer = _renderer;
     this.scene = _scene;
     this.camera = _camera;
   }
@@ -46,19 +46,16 @@ export default abstract class Shader implements IShader {
 
   init(gl: WebGLRenderingContext) {
     this.gl = gl;
-    if (this.program) {
-      gl.deleteProgram(this.program);
-    }
     this.initShaders();
     this.inited = true;
   }
 
   initShaders() {
     const { vertexShader, fragmentShader } = this.generateShaders();
-    this.program = initShaders(this.gl, vertexShader, fragmentShader);
-    if (!this.program) {
-      console.log('Failed to intialize shaders.');
-    }
+    this.shader = createShader(this.gl, {
+      vertex: vertexShader,
+      fragment: fragmentShader
+    });
   }
 
   initFramebufferObject(width: number, height: number): FBO | void {
@@ -123,10 +120,10 @@ export default abstract class Shader implements IShader {
   }
 
   activate() {
-    this.gl.useProgram(this.program);
+    this.shader.bind();
   }
 
 	deactivate() {
-    this.gl.useProgram(null);
+    this.shader.dispose();
   }
 }
