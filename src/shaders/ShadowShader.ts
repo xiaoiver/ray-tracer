@@ -1,16 +1,17 @@
 import { injectable, inject } from 'inversify';
 import { Matrix } from 'sylvester';
-import BaseShader, { FBO } from './BaseShader';
+import BaseShader, { FBO, IShader } from './BaseShader';
 import { Light } from '../light/Light';
 import ShadowLight from '../light/ShadowLight';
 import SERVICE_IDENTIFIER from '../constants/services';
 import { ICameraService } from '../services/Camera';
 import { IRendererService } from '../services/Renderer';
 import { ISceneService } from '../services/Scene';
-import { IControlsService } from '../services/Controls';
 import DirectionalLight from '../light/DirectionalLight';
 import { setVertexAttribute, setUniforms } from '../utils/gl';
 import SpotLight from '../light/SpotLight';
+import Blur from './post-process/Blur';
+import Texture from '../texture/Texture';
 
 export const OFFSCREEN_WIDTH = 2048;
 export const OFFSCREEN_HEIGHT = 2048;
@@ -38,6 +39,15 @@ export default class ShadowShader extends BaseShader {
     @inject(SERVICE_IDENTIFIER.ICameraService) camera: ICameraService
   ) {
     super(renderer, scene, camera);
+
+    const blurH = new Blur(renderer, scene, camera);
+    const blurV = new Blur(renderer, scene, camera);
+    blurH.prevTexture = 0;
+    blurH.nextTexture = 1;
+    blurV.prevTexture = 1;
+    blurV.nextTexture = 0;
+    this.addPostProcess(blurH);
+    this.addPostProcess(blurV);
   }
 
   generateShaders() {
@@ -195,10 +205,18 @@ export default class ShadowShader extends BaseShader {
       
             mesh.geometry.draw(gl);
           });
-
-          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         }
       });
     });
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    if (ShadowShader.mode === ShadowMode.VSM) {
+      this.postProcesses.forEach(p => {
+        p.draw();
+      });
+    }
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 }

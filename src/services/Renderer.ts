@@ -49,6 +49,7 @@ export default class Renderer extends EventEmitter implements IRendererService {
     this.shell.on('gl-init', () => {
       const {canvas, gl} = this.shell;
       this.gl = gl;
+      gl.clearDepth(1.0);
       gl.enable(gl.DEPTH_TEST);
       gl.enable(gl.CULL_FACE);
       this.canvas = canvas;

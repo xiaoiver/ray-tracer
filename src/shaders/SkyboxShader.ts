@@ -89,7 +89,9 @@ export default class SkyboxShader extends BaseShader {
     const {gl, shader: {program}, renderer} = this;
     const {width, height} = renderer.getSize();
 
-    this.activate();
+    // this.activate();
+
+    gl.useProgram(program)
 
     gl.viewport(0, 0, width, height);
     gl.disable(gl.CULL_FACE);

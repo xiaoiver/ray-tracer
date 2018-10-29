@@ -30,6 +30,7 @@ export default class TextureLoader implements ITextureLoaderService {
     if (this.currentId < this.maxTextures) {
       return this.currentId++;
     }
+    console.error('exceeds maxnum of textures.');
   }
 
   load(url: string): Texture {

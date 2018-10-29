@@ -20,7 +20,6 @@ import SpotLight from './light/SpotLight';
 import DisplayShader from './shaders/DisplayShader';
 import ShadowShader from './shaders/ShadowShader';
 import SkyboxShader from './shaders/SkyboxShader';
-import BlurShader from './shaders/BlurShader';
 import LightModel from './light/models/LightModel';
 import Material from './material/Material';
 // import RayTracer from './shaders/RayTracer';
@@ -131,7 +130,6 @@ renderer.on(Renderer.READY_EVENT, () => {
   }));
 
   // renderer.addShader(new SkyboxShader(renderer, scene, camera, skyboxTexture));
-  // renderer.addShader(new BlurShader(renderer, scene, camera, floorTexture));
   renderer.addShader(new ShadowShader(renderer, scene, camera));
   renderer.addShader(new DisplayShader(renderer, scene, camera));
 });

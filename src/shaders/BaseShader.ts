@@ -6,6 +6,7 @@ import SERVICE_IDENTIFIER from '../constants/services';
 import { IRendererService } from '../services/Renderer';
 import { ICameraService } from '../services/Camera';
 import { ISceneService } from '../services/Scene';
+import BasePostProcess from './post-process/BasePostProcess';
 
 export interface FBO {framebuffer: WebGLFramebuffer, texture: WebGLTexture};
 
@@ -15,10 +16,15 @@ export interface IShader {
   init(gl: WebGLRenderingContext): void;
   activate(): void;
   deactivate(): void;
+  addPostProcess(postProcess: BasePostProcess): void;
 }
+
+let id = 0;
 
 @injectable()
 export default abstract class BaseShader implements IShader {
+  id: number;
+
   renderer: IRendererService;
   scene: ISceneService;
   camera: ICameraService;
@@ -26,6 +32,8 @@ export default abstract class BaseShader implements IShader {
   inited: boolean = false;
   shader: Shader;
   gl: WebGLRenderingContext;
+
+  postProcesses: Array<BaseShader> = [];
 
   constructor(
     @inject(SERVICE_IDENTIFIER.IRendererService) _renderer: IRendererService,
@@ -35,6 +43,7 @@ export default abstract class BaseShader implements IShader {
     this.renderer = _renderer;
     this.scene = _scene;
     this.camera = _camera;
+    this.id = id++;
   }
 
   protected abstract generateShaders(): {
@@ -56,6 +65,8 @@ export default abstract class BaseShader implements IShader {
       vertex: vertexShader,
       fragment: fragmentShader
     });
+
+    this.postProcesses.forEach(p => p.init(this.gl));
   }
 
   initFramebufferObject(width: number, height: number): FBO | void {
@@ -125,5 +136,18 @@ export default abstract class BaseShader implements IShader {
 
 	deactivate() {
     this.shader.dispose();
+  }
+
+  addPostProcess(postProcess: BasePostProcess) {
+    this.postProcesses.push(postProcess);
+  }
+
+  removePostProcess(postProcess: BasePostProcess) {
+    for (let i = 0; i < this.postProcesses.length; i++) {
+      if (this.postProcesses[i].id === postProcess.id) {
+        this.postProcesses.splice(i, 1);
+        return;
+      }
+    }
   }
 }
