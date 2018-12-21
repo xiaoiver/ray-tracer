@@ -44,7 +44,7 @@ export default class Renderer extends EventEmitter implements IRendererService {
     this.scene = _scene;
 
     this.shell = createGLShell({
-      clearColor: [0, 0, 0, 1]
+      clearColor: [1.0, 1., 1.0, 1]
     });
     this.shell.on('gl-init', () => {
       const {canvas, gl} = this.shell;

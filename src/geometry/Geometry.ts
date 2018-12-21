@@ -67,13 +67,21 @@ export abstract class Geometry {
 
     /**
      * pay attention to the `type` param
+     * (Uint32Array -> gl.UNSIGNED_INT)
      * Sphere(Uint16Array -> gl.UNSIGNED_SHORT)
      * Cube(Uint8Array -> gl.UNSIGNED_BYTE)
      */
-    const type = this.indices.length > 256 ? gl.UNSIGNED_SHORT : gl.UNSIGNED_BYTE;
+    let type;
+    if (this.indices.BYTES_PER_ELEMENT === 4) {
+      type =  gl.UNSIGNED_INT;
+    } else if (this.indices.BYTES_PER_ELEMENT === 2) {
+      type = gl.UNSIGNED_SHORT;
+    } else if (this.indices.BYTES_PER_ELEMENT === 1) {
+      type = gl.UNSIGNED_BYTE;
+    }
     gl.drawElements(gl.TRIANGLES, this.indices.length, type, 0);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    // gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
   }
 }

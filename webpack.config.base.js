@@ -1,8 +1,20 @@
-const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const { lstatSync, readdirSync } = require('fs');
+const { join, resolve, basename } = require('path');
+
+const isDirectory = source => lstatSync(source).isDirectory();
+const getDirectories = source =>
+  readdirSync(source).map(name => join(source, name)).filter(isDirectory);
+
+const EXAMPLES_DIR = './examples';
+
+const entries = getDirectories(EXAMPLES_DIR).reduce((prev, cur) => {
+  prev[basename(cur)] = resolve(__dirname, join(cur, 'index.ts'));
+  return prev;
+}, {});
 
 module.exports = {
-  entry: ['./src/index.ts'],
+  entry: entries,
   module: {
     rules: [
       {
@@ -16,8 +28,8 @@ module.exports = {
     extensions: [ '.tsx', '.ts', '.js' ]
   },
   output: {
-    filename: 'main.js',
-    path: path.resolve(__dirname, 'docs')
+    filename: '[name].js',
+    path: resolve(__dirname, 'docs')
   },
   node: {
     fs: 'empty'
@@ -25,7 +37,7 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin([{
       from: 'static',
-      to: path.resolve(__dirname, 'docs', 'static')
+      to: resolve(__dirname, 'docs', 'static')
     }])
   ]
 };

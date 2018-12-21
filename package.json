@@ -19,6 +19,8 @@
   "homepage": "https://github.com/xiaoiver/ray-tracer#readme",
   "devDependencies": {
     "@types/dat.gui": "^0.7.1",
+    "@types/earcut": "^2.1.0",
+    "@types/geojson": "^7946.0.4",
     "@types/hammerjs": "^2.0.36",
     "@types/lodash.assign": "^4.2.4",
     "@types/stats.js": "^0.17.0",
@@ -34,6 +36,7 @@
   },
   "dependencies": {
     "dat.gui": "^0.7.2",
+    "earcut": "^2.1.4",
     "eventemitter3": "^3.1.0",
     "gl-fbo": "^2.0.5",
     "gl-now": "^1.4.0",
@@ -44,6 +47,7 @@
     "lodash.assign": "^4.2.0",
     "reflect-metadata": "^0.1.12",
     "stats.js": "^0.17.0",
-    "sylvester": "^0.0.21"
+    "sylvester": "^0.0.21",
+    "viewport-mercator-project": "^6.1.0"
   }
 }

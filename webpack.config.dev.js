@@ -18,8 +18,13 @@ module.exports = merge(base, {
       PUBLIC_PATH: JSON.stringify('/'),
     }),
     new CleanWebpackPlugin(['docs']),
-    new HtmlWebpackPlugin({
-      template: 'src/index.html'
+    ...Object.keys(base.entry).map(entryName => {
+      return new HtmlWebpackPlugin({
+        template: 'src/index.html',
+        chunks: [entryName],
+        filename: `${entryName}.html`,
+        inject: true,
+      });
     }),
     new webpack.HotModuleReplacementPlugin()
   ],

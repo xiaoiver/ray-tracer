@@ -17,14 +17,18 @@ module.exports = merge(base, {
       PUBLIC_PATH: JSON.stringify(PUBLIC_PATH),
     }),
     new CleanWebpackPlugin(['docs']),
-    new HtmlWebpackPlugin({
-      template: 'src/index.html',
-      minify: {
-        removeComments: true,
-        collapseWhitespace: true,
-        removeAttributeQuotes: true,
-        minifyCSS: true
-      }
+    ...Object.keys(base.entry).map(entryName => {
+      return new HtmlWebpackPlugin({
+        template: 'src/index.html',
+        chunks: [entryName],
+        filename: `${entryName}.html`,
+        minify: {
+          removeComments: true,
+          collapseWhitespace: true,
+          removeAttributeQuotes: true,
+          minifyCSS: true
+        }
+      });
     })
   ],
 });
